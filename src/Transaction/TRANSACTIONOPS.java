@@ -1,6 +1,6 @@
 package Transaction;
 
-public enum OPERATIONS {
+public enum TRANSACTIONOPS {
     BEGIN,
     BEGINRO,
     FAIL,
