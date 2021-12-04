@@ -56,14 +56,14 @@ public class IOManager {
                     transactionId = fields.split(",")[0];
                     variable = fields.split(",")[1];
                     value = Integer.parseInt(fields.split(",")[2]);
-                    transaction = TRANSACTIONS.W;
+                    transaction = TRANSACTIONS.WRITE;
                 } else if (line.startsWith("R")) {
                     String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                     transactionId = fields.split(",")[0];
                     if (readOnlyTransactions.contains(transactionId)) {
-                        transaction = TRANSACTIONS.RO;
+                        transaction = TRANSACTIONS.READONLY;
                     } else {
-                        transaction = TRANSACTIONS.R;
+                        transaction = TRANSACTIONS.READ;
                     }
                     variable = fields.split(",")[1];
                 }
