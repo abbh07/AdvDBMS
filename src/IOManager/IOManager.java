@@ -1,6 +1,6 @@
 package IOManager;
 
-import Transaction.OPERATIONS;
+import Transaction.TRANSACTIONOPS;
 import Transaction.TRANSACTIONS;
 import Transaction.Transaction;
 
@@ -23,7 +23,7 @@ public class IOManager {
             int value;
             String transactionId;
             String variable;
-            OPERATIONS operation;
+            TRANSACTIONOPS operation;
             TRANSACTIONS transaction;
             while (line != null) {
                 siteId = -1;
@@ -34,22 +34,22 @@ public class IOManager {
                 transaction = null;
                 if (line.startsWith("beginRO")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = OPERATIONS.BEGINRO;
+                    operation = TRANSACTIONOPS.BEGINRO;
                     readOnlyTransactions.add(transactionId);
                 } else if (line.startsWith("begin")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = OPERATIONS.BEGIN;
+                    operation = TRANSACTIONOPS.BEGIN;
                 } else if (line.startsWith("fail")) {
                     siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
-                    operation = OPERATIONS.FAIL;
+                    operation = TRANSACTIONOPS.FAIL;
                 } else if (line.startsWith("recover")) {
                     siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
-                    operation = OPERATIONS.RECOVER;
+                    operation = TRANSACTIONOPS.RECOVER;
                 } else if (line.startsWith("end")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = OPERATIONS.END;
+                    operation = TRANSACTIONOPS.END;
                 } else if (line.startsWith("dump")) {
-                    operation = OPERATIONS.DUMP;
+                    operation = TRANSACTIONOPS.DUMP;
                 } else if (line.startsWith("W")) {
                     String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                     transactionId = fields.split(",")[0];

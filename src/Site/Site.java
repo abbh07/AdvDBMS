@@ -2,72 +2,54 @@ package Site;
 
 import Lock.Lock;
 import Lock.LOCKTYPES;
+import Transaction.Transaction;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Site {
     private static final int totalVariables = 20;
     private int siteId;
+    private HashMap<String, Variable> dataMap;
     private boolean siteStatus;
-    private Map<Integer, Integer> siteData;
-    private Lock lock;
 
-    public Site(int siteId) {
+
+    public Site(int siteId, boolean siteStatus) {
         this.siteId = siteId;
-        siteStatus = true;
-        lock = new Lock();
+        this.siteStatus = siteStatus;
+        this.dataMap = new HashMap<>();
     }
 
     public void initData() {
-        for (int i = 1; i <= totalVariables; i++) {
-            if (i % 2 == 0) {
-                siteData.put(i, 10 * i);
-            } else if ((i % 10) + 1 == siteId) {
-                siteData.put(i, 10 * i);
-            }
-        }
+
     }
 
-    public void failSite() {
-        siteStatus = false;
+    public void failSite(){
+        this.siteStatus = false;
     }
 
-    public void recoverSite() {
-        siteStatus = true;
+    public void recoverSite(){
+        this.siteStatus = true;
     }
 
-    public boolean getSiteStatus() {
-        return siteStatus;
+    public void writeValue(String key, int value){
+        Variable varObject =  this.dataMap.get(key);
+        varObject.setValue(value);
+        this.dataMap.put(key, varObject);
     }
 
-    public int getValue(int key) {
-        return siteData.get(key);
+    public boolean acquireLock(String variable, Transaction transaction, LOCKTYPES type) {
+        //acquireLock
+        return false;
     }
 
-    public void setValue(int key, int value) {
-        siteData.put(key, value);
+    public void releaseLock(String variable, Transaction transaction) {
+        //release Lock
     }
 
-    public LOCKTYPES getLockStatus(int key) {
-        return lock.getLock(key);
-    }
 
-    public boolean acquireLock(int variable, String transactionId, LOCKTYPES type) {
-        return lock.acquireLock(variable, transactionId, type);
-    }
-
-    public void releaseLock(int variable) {
-        lock.releaseLock(variable);
-    }
-
-    public boolean isKeyPresent(int key) {
-        return siteData.containsKey(key);
-    }
-
-    public void dump() {
-        System.out.println("site " + siteId + " -");
-        for (Map.Entry<Integer, Integer> e : siteData.entrySet()) {
-            System.out.println(e.getKey() + ": " + e.getValue());
-        }
+    public void print() {
+        //Implement print
     }
 }
