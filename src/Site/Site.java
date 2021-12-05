@@ -22,9 +22,11 @@ public class Site {
         this.siteId = siteId;
         this.siteStatus = siteStatus;
         this.dataMap = new HashMap<>();
+        this.lockMap = new HashMap<>();
     }
 
-    public void initData() {
+    public void initData(String key, int value) {
+        this.writeValue(key, value, 0);
     }
 
     public void failSite(){
@@ -38,7 +40,7 @@ public class Site {
     public void writeValue(String key, int value, int time){
         TreeMap<Integer, Integer> treeMap = new TreeMap<>();
         treeMap.put(time, value);
-        dataMap.put(key, treeMap);
+        this.dataMap.put(key, treeMap);
     }
 
     public int getLatestValue(String key){
