@@ -1,6 +1,6 @@
 package IOManager;
 
-import Transaction.TRANSACTIONOPS;
+import Action.Operations;
 import Transaction.TRANSACTIONS;
 import Transaction.Transaction;
 
@@ -11,6 +11,26 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class IOManager {
+    private BufferedReader reader;
+
+    public IOManager(String filename){
+        try{
+            reader = new BufferedReader(new FileReader(filename));
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String readLine(){
+        String line = "";
+        try{
+            line = reader.readLine();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+        return line;
+    }
+
     public ArrayList<Transaction> readInput(String filename) {
         BufferedReader reader;
         ArrayList<Transaction> transactions = new ArrayList<>();
@@ -23,7 +43,7 @@ public class IOManager {
             int value;
             String transactionId;
             String variable;
-            TRANSACTIONOPS operation;
+            Operations operation;
             TRANSACTIONS transaction;
             while (line != null) {
                 siteId = -1;
@@ -34,22 +54,22 @@ public class IOManager {
                 transaction = null;
                 if (line.startsWith("beginRO")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = TRANSACTIONOPS.BEGINRO;
+                    operation = Operations.BEGINRO;
                     readOnlyTransactions.add(transactionId);
                 } else if (line.startsWith("begin")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = TRANSACTIONOPS.BEGIN;
+                    operation = Operations.BEGIN;
                 } else if (line.startsWith("fail")) {
                     siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
-                    operation = TRANSACTIONOPS.FAIL;
+                    operation = Operations.FAIL;
                 } else if (line.startsWith("recover")) {
                     siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
-                    operation = TRANSACTIONOPS.RECOVER;
+                    operation = Operations.RECOVER;
                 } else if (line.startsWith("end")) {
                     transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                    operation = TRANSACTIONOPS.END;
+                    operation = Operations.END;
                 } else if (line.startsWith("dump")) {
-                    operation = TRANSACTIONOPS.DUMP;
+                    operation = Operations.DUMP;
                 } else if (line.startsWith("W")) {
                     String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                     transactionId = fields.split(",")[0];
