@@ -1,14 +1,16 @@
 package Transaction;
 
+import Action.Operations;
+
 public class Transaction {
-    private TRANSACTIONOPS transactionOperation;
+    private Operations transactionOperation;
     private TRANSACTIONS transaction;
     private String transactionId;
     private String variable;
     private int value;
     private int siteId;
 
-    public Transaction(TRANSACTIONOPS transactionOperation, TRANSACTIONS transaction, String transactionId, String variable, int value, int siteId) {
+    public Transaction(Operations transactionOperation, TRANSACTIONS transaction, String transactionId, String variable, int value, int siteId) {
         this.transactionOperation = transactionOperation;
         this.transaction = transaction;
         this.transactionId = transactionId;
@@ -17,11 +19,11 @@ public class Transaction {
         this.siteId = siteId;
     }
 
-    public TRANSACTIONOPS getOperation() {
+    public Operations getOperation() {
         return transactionOperation;
     }
 
-    public void setOperation(TRANSACTIONOPS transactionOperation) {
+    public void setOperation(Operations transactionOperation) {
         this.transactionOperation = transactionOperation;
     }
 
