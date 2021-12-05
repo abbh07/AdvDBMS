@@ -4,18 +4,38 @@ import Lock.Lock;
 import Lock.LOCKTYPES;
 import Transaction.Transaction;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Site {
     private static final int totalVariables = 20;
     private int siteId;
     private Map<String, TreeMap<Integer, Integer>> dataMap;
     private Map<String, List<Lock>> lockMap;
-
     private boolean siteStatus;
+
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
+    }
+
+    public Map<String, TreeMap<Integer, Integer>> getDataMap() {
+        return dataMap;
+    }
+
+    public void setDataMap(Map<String, TreeMap<Integer, Integer>> dataMap) {
+        this.dataMap = dataMap;
+    }
+
+    public Map<String, List<Lock>> getLockMap() {
+        return lockMap;
+    }
+
+    public void setLockMap(Map<String, List<Lock>> lockMap) {
+        this.lockMap = lockMap;
+    }
 
 
     public Site(int siteId, boolean siteStatus) {
@@ -38,7 +58,7 @@ public class Site {
     }
 
     public void writeValue(String key, int value, int time){
-        TreeMap<Integer, Integer> treeMap = new TreeMap<>();
+        TreeMap<Integer, Integer> treeMap = this.dataMap.getOrDefault(key, new TreeMap<>());
         treeMap.put(time, value);
         this.dataMap.put(key, treeMap);
     }
@@ -54,13 +74,49 @@ public class Site {
         return treeMap.get(index);
     }
 
-    public boolean acquireLock(String variable, Transaction transaction, LOCKTYPES type) {
-        //acquireLock
-        return false;
+    public boolean canAcquireLock(String variable, Transaction transaction, LOCKTYPES lockType) {
+        List<Lock> locksPresent = this.lockMap.get(variable);
+        return (lockType == LOCKTYPES.READ) ? canAcquireReadLock(locksPresent, transaction) : canAcquireWriteLock(locksPresent, transaction);
+    }
+
+    private boolean canAcquireReadLock(List<Lock> locksPresent, Transaction transaction) {
+        for(Lock lock : locksPresent){
+            if(lock.getLockType() == LOCKTYPES.WRITE && lock.getTransaction().getTransactionId() != transaction.getTransactionId()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean canAcquireWriteLock(List<Lock> locksPresent, Transaction transaction) {
+        for(Lock lock : locksPresent){
+            if(lock.getLockType() == LOCKTYPES.READ && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
     public void releaseLock(String variable, Transaction transaction) {
-        //release Lock
+        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
+        List<Lock> locksToRemove = new ArrayList<Lock>();
+        for (Lock lock : lockList){
+            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                locksToRemove.add(lock);
+            }
+        }
+        lockList.removeAll(locksToRemove);
+        this.lockMap.put(variable, lockList);
+        //call graph
+    }
+
+    public void acquireLock(String variable, Transaction transaction, LOCKTYPES lockType) {
+        Lock lock = new Lock(lockType, transaction);
+        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
+        lockList.add(lock);
+        this.lockMap.put(variable, lockList);
+        //call Graph method
     }
 
 

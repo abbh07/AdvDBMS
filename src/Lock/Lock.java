@@ -7,9 +7,14 @@ public class Lock {
     LOCKTYPES lockType;
     Transaction transaction;
 
-    Lock(){
+    public Lock(){
         this.lockType = LOCKTYPES.NOLOCK;
         this.transaction = null;
+    }
+
+    public Lock(LOCKTYPES lockType, Transaction transaction){
+        this.lockType = lockType;
+        this.transaction = transaction;
     }
 
     public LOCKTYPES getLockType() {
