@@ -7,11 +7,14 @@ import Transaction.Transaction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Site {
     private static final int totalVariables = 20;
     private int siteId;
-    private HashMap<String, Variable> dataMap;
+    private Map<String, TreeMap<Integer, Integer>> dataMap;
+    private Map<String, List<Lock>> lockMap;
+
     private boolean siteStatus;
 
 
@@ -22,7 +25,6 @@ public class Site {
     }
 
     public void initData() {
-
     }
 
     public void failSite(){
@@ -33,10 +35,21 @@ public class Site {
         this.siteStatus = true;
     }
 
-    public void writeValue(String key, int value){
-        Variable varObject =  this.dataMap.get(key);
-        varObject.setValue(value);
-        this.dataMap.put(key, varObject);
+    public void writeValue(String key, int value, int time){
+        TreeMap<Integer, Integer> treeMap = new TreeMap<>();
+        treeMap.put(time, value);
+        dataMap.put(key, treeMap);
+    }
+
+    public int getLatestValue(String key){
+        TreeMap<Integer, Integer> treeMap = dataMap.get(key);
+        return treeMap.get(treeMap.lastKey());
+    }
+
+    public int getValue(String key, int time){
+        TreeMap<Integer, Integer> treeMap = dataMap.get(key);
+        int index = treeMap.lowerKey(time);
+        return treeMap.get(index);
     }
 
     public boolean acquireLock(String variable, Transaction transaction, LOCKTYPES type) {
