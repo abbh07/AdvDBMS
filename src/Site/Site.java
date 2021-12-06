@@ -77,7 +77,7 @@ public class Site {
 
     public int getValue(String key, int time){
         TreeMap<Integer, Integer> treeMap = dataMap.get(key);
-        int index = treeMap.lowerKey(time);
+        int index = treeMap.lowerKey(time+1);
         return treeMap.get(index);
     }
 
