@@ -4,24 +4,24 @@ import Transaction.Transaction;
 
 public class Lock {
 
-    LOCKTYPES lockType;
+    LockTypes lockType;
     Transaction transaction;
 
     public Lock(){
-        this.lockType = LOCKTYPES.NOLOCK;
+        this.lockType = LockTypes.NOLOCK;
         this.transaction = null;
     }
 
-    public Lock(LOCKTYPES lockType, Transaction transaction){
+    public Lock(LockTypes lockType, Transaction transaction){
         this.lockType = lockType;
         this.transaction = transaction;
     }
 
-    public LOCKTYPES getLockType() {
+    public LockTypes getLockType() {
         return lockType;
     }
 
-    public void setLockType(LOCKTYPES lockType) {
+    public void setLockType(LockTypes lockType) {
         this.lockType = lockType;
     }
 
