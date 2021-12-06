@@ -145,6 +145,22 @@ public class TransactionManager {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
             //Bhatta - cache to write or not?
+            for (HashMap<String, Integer> map : cache.values()) {
+                for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                    String key = entry.getKey();
+                    int val = entry.getValue();
+                    for (Site s : sites) {
+                        if (s.getSiteStatus()) {
+                            Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
+                            if (dataMap.containsKey(key)) {
+                                TreeMap<Integer, Integer> pair = dataMap.get(key);
+                                pair.put(tick, val);
+                                dataMap.put(key, pair);
+                            }
+                        }
+                    }
+                }
+            }
             action.getTransaction().setLive(false);
             cleanUpTransaction(action.getTransaction());
             //Print end
