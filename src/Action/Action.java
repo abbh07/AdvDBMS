@@ -3,8 +3,8 @@ package Action;
 import Transaction.Transaction;
 
 public class Action {
-    private Operations operation ;
-    private Transaction transaction;
+    protected Operations operation ;
+    protected Transaction transaction;
 
     public Operations getOperation() {
         return operation;
