@@ -8,6 +8,7 @@ import Lock.LockTypes;
 import Site.Site;
 import Transaction.*;
 
+import java.sql.Array;
 import java.util.*;
 
 public class TransactionManager {
@@ -24,7 +25,7 @@ public class TransactionManager {
         this.transactions = new ArrayList<>();
         this.sites = new ArrayList<>();
         this.deadlock = new Deadlock();
-        this.waitQueue = new LinkedList<Action>();
+        this.waitQueue = new LinkedList<>();
         this.variableStieMap = new HashMap<>();
         this.cache = new HashMap<>();
     }
@@ -49,8 +50,9 @@ public class TransactionManager {
         List<Site> sites = variableStieMap.get(action.getVariable());
         boolean isRead = false;
         if(sites.size()==1 && sites.get(0).getSiteStatus()){
+
             isRead = true;
-            System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
+            System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
         } else{
             for(Site site : sites){
                 if(site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())){
@@ -119,23 +121,84 @@ public class TransactionManager {
         }
     }
 
+    private void beginAction(BeginAction action){
+        this.addTransaction(action.getTransaction());
+    }
+
+    private void beginRoAction(BeginRoAction action){
+        this.addTransaction(action.getTransaction());
+    }
+    private void dumpAction(DumpAction action){
+    }
+
+    private void recoverAction(RecoverAction action){
+        Site site = action.getSite();
+        site.setSiteStatus(true);
+        site.setLockMap(new HashMap<>());
+        TreeMap<Integer, Integer> treeMap = site.getStartEndTimeMap();
+        treeMap.put(tick, Integer.MAX_VALUE);
+        site.setStartEndTimeMap(treeMap);
+    }
+
+    private void endAction(EndAction action){
+        //To check what to do with Q?
+        if(action.getTransaction().getLive()){
+            //Bhatta - cache to write or not?
+            action.getTransaction().setLive(false);
+            cleanUpTransaction(action.getTransaction());
+            //Print end
+            System.out.println(action.getTransaction().getTransactionId() + " : ended");
+        }
+        else{
+            //Print already ended
+            System.out.println(action.getTransaction().getTransactionId() + " : already ended");
+        }
+    }
+
+    private void cleanUpTransaction(Transaction transaction){
+        for(Site s : sites){
+            for(String variable : s.getLockMap().keySet()){
+                List<Lock> locksToRemove = new ArrayList<>();
+                for(Lock lock : s.getLockMap().get(variable)){
+                    if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                        locksToRemove.add(lock);
+                    }
+                }
+                s.getLockMap().get(variable).removeAll(locksToRemove);
+            }
+        }
+        transactions.remove(transaction);
+    }
+
+    private void failAction(FailAction action){
+        Site site = action.getSite();
+        site.setSiteStatus(false);
+        site.setLockMap(new HashMap<>());
+        site.setEndTime(tick);
+    }
+
     public void processAction(Action action) {
         Operations actionType = action.getOperation();
         switch (actionType) {
             case BEGIN:
-                // code block
+                if(action instanceof BeginAction)
+                    beginAction((BeginAction) action);
                 break;
             case BEGINRO:
-                // code block
+                if(action instanceof BeginRoAction)
+                    beginRoAction((BeginRoAction) action);
                 break;
             case DUMP:
-                // code block
+                if(action instanceof DumpAction)
+                    dumpAction((DumpAction) action);
                 break;
             case END:
-                // code block
+                if(action instanceof EndAction)
+                    endAction((EndAction) action);
                 break;
             case FAIL:
-                // code block
+                if(action instanceof FailAction)
+                    failAction((FailAction) action);
                 break;
             case READ:
                 if(action instanceof ReadAction){
@@ -145,10 +208,10 @@ public class TransactionManager {
                         readAction((ReadAction) action);
                     }
                 }
-
                 break;
             case RECOVER:
-                // code block
+                if(action instanceof RecoverAction)
+                    recoverAction((RecoverAction) action);
                 break;
             case WRITE:
                 if(action instanceof WriteAction)
@@ -163,18 +226,17 @@ public class TransactionManager {
     public void simulate(String filename) {
         IOManager ioManager = new IOManager(filename);
         String line = "";
-        while((line= ioManager.readLine()).length()!=0){
+        while((line = ioManager.readLine()) != null){
             //Check deadlock and waitQ;
             Action action = null;
             if (line.startsWith("beginRO")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                 Transaction transaction = new Transaction(transactionId, TransactionType.READONLY, tick);
                 transactions.add(transaction);
-                action = new BeginRO(transaction);
+                action = new BeginRoAction(transaction);
             } else if (line.startsWith("begin")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                 Transaction transaction = new Transaction(transactionId, TransactionType.BOTH, tick);
-                transactions.add(transaction);
                 action = new BeginAction(transaction);
             } else if (line.startsWith("fail")) {
                 int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
@@ -187,6 +249,8 @@ public class TransactionManager {
                 }
                 if (failedSite != null) {
                     action = new FailAction(failedSite);
+                } else{
+                    System.out.println("Can't fail the site as it doesn't exist");
                 }
             } else if (line.startsWith("recover")) {
                 int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
@@ -246,6 +310,4 @@ public class TransactionManager {
                 this.processAction(action);
         }
     }
-
-
 }

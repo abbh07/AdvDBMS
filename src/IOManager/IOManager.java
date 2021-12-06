@@ -1,14 +1,8 @@
 package IOManager;
 
-import Action.Operations;
-import Transaction.TransactionType;
-import Transaction.Transaction;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 
 public class IOManager {
     private BufferedReader reader;
