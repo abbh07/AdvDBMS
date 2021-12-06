@@ -228,6 +228,8 @@ public class TransactionManager {
         String line = "";
         while((line = ioManager.readLine()) != null){
             //Check deadlock and waitQ;
+            Transaction victim = deadlock.resolveDeadlock(transactions);
+            cleanUpTransaction(victim);
             Action action = null;
             if (line.startsWith("beginRO")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
