@@ -49,8 +49,9 @@ public class TransactionManager {
         List<Site> sites = variableStieMap.get(action.getVariable());
         boolean isRead = false;
         if(sites.size()==1 && sites.get(0).getSiteStatus()){
+
             isRead = true;
-            System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
+            System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
         } else{
             for(Site site : sites){
                 if(site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())){
