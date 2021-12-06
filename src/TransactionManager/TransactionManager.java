@@ -46,23 +46,23 @@ public class TransactionManager {
         this.transactions.add(transaction);
     }
 
-    private void readOnlyAction(ReadAction action){
+    private void readOnlyAction(ReadAction action) {
         List<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
-        if(sites.size()==1 && sites.get(0).getSiteStatus()){
+        if (sites.size() == 1 && sites.get(0).getSiteStatus()) {
 
             isRead = true;
             System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
-        } else{
-            for(Site site : sites){
-                if(site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())){
+        } else {
+            for (Site site : sites) {
+                if (site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                     isRead = true;
                     System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
                     break;
                 }
             }
         }
-        if(!isRead)
+        if (!isRead)
             waitQueue.add(action);
     }
 
@@ -113,7 +113,7 @@ public class TransactionManager {
             }
         } else {
             HashMap<String, Integer> variables = cache.get(action.getTransaction().getTransactionId());
-            if(variables == null) {
+            if (variables == null) {
                 variables = new HashMap<>();
             }
             variables.put(action.getVariable(), action.getValue());
@@ -121,17 +121,18 @@ public class TransactionManager {
         }
     }
 
-    private void beginAction(BeginAction action){
+    private void beginAction(BeginAction action) {
         this.addTransaction(action.getTransaction());
     }
 
-    private void beginRoAction(BeginRoAction action){
+    private void beginRoAction(BeginRoAction action) {
         this.addTransaction(action.getTransaction());
     }
-    private void dumpAction(DumpAction action){
+
+    private void dumpAction(DumpAction action) {
     }
 
-    private void recoverAction(RecoverAction action){
+    private void recoverAction(RecoverAction action) {
         Site site = action.getSite();
         site.setSiteStatus(true);
         site.setLockMap(new HashMap<>());
@@ -140,27 +141,26 @@ public class TransactionManager {
         site.setStartEndTimeMap(treeMap);
     }
 
-    private void endAction(EndAction action){
+    private void endAction(EndAction action) {
         //To check what to do with Q?
-        if(action.getTransaction().getLive()){
+        if (action.getTransaction().getLive()) {
             //Bhatta - cache to write or not?
             action.getTransaction().setLive(false);
             cleanUpTransaction(action.getTransaction());
             //Print end
             System.out.println(action.getTransaction().getTransactionId() + " : ended");
-        }
-        else{
+        } else {
             //Print already ended
             System.out.println(action.getTransaction().getTransactionId() + " : already ended");
         }
     }
 
-    private void cleanUpTransaction(Transaction transaction){
-        for(Site s : sites){
-            for(String variable : s.getLockMap().keySet()){
+    private void cleanUpTransaction(Transaction transaction) {
+        for (Site s : sites) {
+            for (String variable : s.getLockMap().keySet()) {
                 List<Lock> locksToRemove = new ArrayList<>();
-                for(Lock lock : s.getLockMap().get(variable)){
-                    if(Objects.equals(lock.getTransaction().getTransactionId(), transaction.getTransactionId())){
+                for (Lock lock : s.getLockMap().get(variable)) {
+                    if (Objects.equals(lock.getTransaction().getTransactionId(), transaction.getTransactionId())) {
                         locksToRemove.add(lock);
                     }
                 }
@@ -170,7 +170,7 @@ public class TransactionManager {
         transactions.remove(transaction);
     }
 
-    private void failAction(FailAction action){
+    private void failAction(FailAction action) {
         Site site = action.getSite();
         site.setSiteStatus(false);
         site.setLockMap(new HashMap<>());
@@ -181,40 +181,40 @@ public class TransactionManager {
         Operations actionType = action.getOperation();
         switch (actionType) {
             case BEGIN:
-                if(action instanceof BeginAction)
+                if (action instanceof BeginAction)
                     beginAction((BeginAction) action);
                 break;
             case BEGINRO:
-                if(action instanceof BeginRoAction)
+                if (action instanceof BeginRoAction)
                     beginRoAction((BeginRoAction) action);
                 break;
             case DUMP:
-                if(action instanceof DumpAction)
+                if (action instanceof DumpAction)
                     dumpAction((DumpAction) action);
                 break;
             case END:
-                if(action instanceof EndAction)
+                if (action instanceof EndAction)
                     endAction((EndAction) action);
                 break;
             case FAIL:
-                if(action instanceof FailAction)
+                if (action instanceof FailAction)
                     failAction((FailAction) action);
                 break;
             case READ:
-                if(action instanceof ReadAction){
-                    if(action.getTransaction().getTransactionType() == TransactionType.READONLY){
+                if (action instanceof ReadAction) {
+                    if (action.getTransaction().getTransactionType() == TransactionType.READONLY) {
                         readOnlyAction((ReadAction) action);
-                    } else if(action.getTransaction().getTransactionType() == TransactionType.BOTH){
+                    } else if (action.getTransaction().getTransactionType() == TransactionType.BOTH) {
                         readAction((ReadAction) action);
                     }
                 }
                 break;
             case RECOVER:
-                if(action instanceof RecoverAction)
+                if (action instanceof RecoverAction)
                     recoverAction((RecoverAction) action);
                 break;
             case WRITE:
-                if(action instanceof WriteAction)
+                if (action instanceof WriteAction)
                     writeAction((WriteAction) action);
                 break;
             default:
@@ -226,10 +226,11 @@ public class TransactionManager {
     public void simulate(String filename) {
         IOManager ioManager = new IOManager(filename);
         String line;
-        while((line = ioManager.readLine()) != null){
+        while ((line = ioManager.readLine()) != null) {
             //Check deadlock and waitQ;
             Transaction victim = deadlock.resolveDeadlock(transactions);
             cleanUpTransaction(victim);
+            tick++;
             Action action = null;
             if (line.startsWith("beginRO")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
@@ -251,7 +252,7 @@ public class TransactionManager {
                 }
                 if (failedSite != null) {
                     action = new FailAction(failedSite);
-                } else{
+                } else {
                     System.out.println("Can't fail the site as it doesn't exist");
                 }
             } else if (line.startsWith("recover")) {
