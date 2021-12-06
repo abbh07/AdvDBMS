@@ -3,6 +3,22 @@ package Action;
 import Transaction.Transaction;
 
 public class Action {
-    public Operations operation ;
-    public Transaction transaction;
+    private Operations operation ;
+    private Transaction transaction;
+
+    public Operations getOperation() {
+        return operation;
+    }
+
+    public void setOperation(Operations operation) {
+        this.operation = operation;
+    }
+
+    public Transaction getTransaction() {
+        return transaction;
+    }
+
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
+    }
 }

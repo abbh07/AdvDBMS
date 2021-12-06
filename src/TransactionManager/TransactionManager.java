@@ -36,7 +36,36 @@ public class TransactionManager {
     }
 
     public void processAction(Action action){
-        //Process the input
+        Operations actionType = action.getOperation();
+        switch(actionType) {
+            case BEGIN:
+                // code block
+                break;
+            case BEGINRO:
+                // code block
+                break;
+            case DUMP:
+                // code block
+                break;
+            case END:
+                // code block
+                break;
+            case FAIL:
+                // code block
+                break;
+            case READ:
+                // code block
+                break;
+            case RECOVER:
+                // code block
+                break;
+            case WRITE:
+                // code block
+                break;
+            default:
+                // code block
+        }
+
     }
 
     public void simulate(String filename){
@@ -109,8 +138,26 @@ public class TransactionManager {
                     }
                 }
                 String variable = fields.split(",")[1];
+                if(readTransaction!=null){
+                    action = new ReadAction(readTransaction, variable);
+                }
             }
-            this.processAction(action);
+            else if (line.startsWith("W")) {
+                String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+                String transactionId = fields.split(",")[0];
+                Transaction writeTransaction = null;
+                for(Transaction t : transactions){
+                    if(t.getTransactionId()==transactionId){
+                        writeTransaction = t;
+                        break;
+                    }
+                }
+                String variable = fields.split(",")[1];
+                int value = Integer.parseInt(fields.split(",")[2]);
+                action = new WriteAction(writeTransaction, variable, value);
+            }
+            if(action!=null)
+                this.processAction(action);
         }
     }
 
