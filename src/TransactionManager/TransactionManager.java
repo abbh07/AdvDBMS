@@ -228,8 +228,11 @@ public class TransactionManager {
         String line;
         while ((line = ioManager.readLine()) != null) {
             //Check deadlock and waitQ;
-            Transaction victim = deadlock.resolveDeadlock(transactions);
-            cleanUpTransaction(victim);
+            if (deadlock.checkForDeadlock()) {
+                Transaction victim = deadlock.resolveDeadlock(transactions);
+                cleanUpTransaction(victim);
+            }
+
             tick++;
             Action action = null;
             if (line.startsWith("beginRO")) {
