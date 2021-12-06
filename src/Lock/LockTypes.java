@@ -1,6 +1,6 @@
 package Lock;
 
-public enum LOCKTYPES {
+public enum LockTypes {
     READ,
     WRITE,
     NOLOCK

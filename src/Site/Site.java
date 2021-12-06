@@ -1,7 +1,7 @@
 package Site;
 
 import Lock.Lock;
-import Lock.LOCKTYPES;
+import Lock.LockTypes;
 import Transaction.Transaction;
 
 import java.util.*;
@@ -74,14 +74,14 @@ public class Site {
         return treeMap.get(index);
     }
 
-    public boolean canAcquireLock(String variable, Transaction transaction, LOCKTYPES lockType) {
+    public boolean canAcquireLock(String variable, Transaction transaction, LockTypes lockType) {
         List<Lock> locksPresent = this.lockMap.get(variable);
-        return (lockType == LOCKTYPES.READ) ? canAcquireReadLock(locksPresent, transaction) : canAcquireWriteLock(locksPresent, transaction);
+        return (lockType == LockTypes.READ) ? canAcquireReadLock(locksPresent, transaction) : canAcquireWriteLock(locksPresent, transaction);
     }
 
     private boolean canAcquireReadLock(List<Lock> locksPresent, Transaction transaction) {
         for(Lock lock : locksPresent){
-            if(lock.getLockType() == LOCKTYPES.WRITE && lock.getTransaction().getTransactionId() != transaction.getTransactionId()){
+            if(lock.getLockType() == LockTypes.WRITE && lock.getTransaction().getTransactionId() != transaction.getTransactionId()){
                 return false;
             }
         }
@@ -90,7 +90,7 @@ public class Site {
 
     private boolean canAcquireWriteLock(List<Lock> locksPresent, Transaction transaction) {
         for(Lock lock : locksPresent){
-            if(lock.getLockType() == LOCKTYPES.READ && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+            if(lock.getLockType() == LockTypes.READ && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
                 continue;
             }
             return false;
@@ -111,7 +111,7 @@ public class Site {
         //call graph
     }
 
-    public void acquireLock(String variable, Transaction transaction, LOCKTYPES lockType) {
+    public void acquireLock(String variable, Transaction transaction, LockTypes lockType) {
         //promote read to write
         Lock lock = new Lock(lockType, transaction);
         List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
