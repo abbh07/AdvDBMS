@@ -1,6 +1,7 @@
 package TransactionManager;
 
 import Action.*;
+import Deadlock.Deadlock;
 import IOManager.IOManager;
 import Lock.LockTypes;
 import Site.Site;
@@ -13,11 +14,13 @@ public class TransactionManager {
     private List<Transaction> transactions;
     private List<Site> sites;
     private Queue<Action> waitQueue;
+    private Deadlock deadlock;
     private int tick = 0;
 
     public TransactionManager(){
-        this.transactions = new ArrayList<Transaction>();
-        this.sites = new ArrayList<Site>();
+        this.transactions = new ArrayList<>();
+        this.sites = new ArrayList<>();
+        this.deadlock = new Deadlock();
     }
 
     public List<Transaction> getTransactions() {
@@ -43,6 +46,7 @@ public class TransactionManager {
             if(s.getSiteStatus()) {
                 Map<String, TreeMap<Integer, Integer>> map = s.getDataMap();
                 if(map.containsKey(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
+                    s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
@@ -52,6 +56,32 @@ public class TransactionManager {
 
         if(!isAvailable) {
             waitQueue.add(action);
+        }
+    }
+
+    private void writeAction(WriteAction action) {
+        boolean isAllAvailable = true;
+
+        for(Site s: sites) {
+            if(s.getSiteStatus()) {
+                if(!s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE)) {
+                    //TODO: get the transaction which holds the lock and add it to the wait-for graph
+                    isAllAvailable = false;
+                    break;
+                }
+            }
+        }
+
+        if(isAllAvailable) {
+            for(Site s: sites) {
+                if(s.getSiteStatus()) {
+                    s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
+                    s.writeValue(action.getVariable(), action.getValue(), tick);
+                }
+            }
+        }
+        else {
+            //TODO: write to cache
         }
     }
 
