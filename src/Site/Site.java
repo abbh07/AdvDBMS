@@ -12,11 +12,6 @@ public class Site {
     private Map<String, TreeMap<Integer, Integer>> dataMap;
     private Map<String, List<Lock>> lockMap;
     private TreeMap<Integer, Integer> startEndTimeMap;
-
-    public boolean getSiteStatus() {
-        return siteStatus;
-    }
-
     private boolean siteStatus;
 
     public int getSiteId() {
@@ -43,6 +38,13 @@ public class Site {
         this.lockMap = lockMap;
     }
 
+    public boolean getSiteStatus() {
+        return siteStatus;
+    }
+
+    public void setSiteStatus(boolean siteStatus) {
+        this.siteStatus = siteStatus;
+    }
 
     public Site(int siteId, boolean siteStatus) {
         this.siteId = siteId;
@@ -158,14 +160,18 @@ public class Site {
     }
 
     private boolean isValidForReadOnly(int startTime, int endTime){
+        int siteUpTime = startEndTimeMap.lowerKey(startTime);
         for(int i=startTime; i<=endTime; i++){
-            int siteUpTime = startEndTimeMap.lowerKey(i+1);
-            if(startEndTimeMap.get(siteUpTime)<=endTime)
+            if(startEndTimeMap.get(siteUpTime)>endTime)
                 return false;
         }
         return true;
     }
 
+    public void setEndTime(int time){
+        int key = this.startEndTimeMap.lastKey();
+        this.startEndTimeMap.put(key, time);
+    }
 
     public void print() {
         //Implement print
