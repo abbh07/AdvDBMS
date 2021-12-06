@@ -239,6 +239,21 @@ public class TransactionManager {
 
     }
 
+    private void resolveQueue() {
+        while (!waitQueue.isEmpty()) {
+            int size = waitQueue.size();
+            for (int i = 0; i < size; i++) {
+                Action action = waitQueue.peek();
+                waitQueue.poll();
+                this.processAction(action);
+                //toggle boolean
+            }
+            if(size == waitQueue.size()) {
+                break;
+            }
+        }
+    }
+
     public void simulate(String filename) {
         IOManager ioManager = new IOManager(filename);
         String line;
@@ -248,6 +263,7 @@ public class TransactionManager {
                 Transaction victim = deadlock.resolveDeadlock(transactions);
                 cleanUpTransaction(victim);
             }
+            resolveQueue();
 
             tick++;
             Action action = null;
