@@ -112,6 +112,7 @@ public class Site {
     }
 
     public void acquireLock(String variable, Transaction transaction, LOCKTYPES lockType) {
+        //promote read to write
         Lock lock = new Lock(lockType, transaction);
         List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
         lockList.add(lock);

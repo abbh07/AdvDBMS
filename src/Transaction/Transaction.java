@@ -3,36 +3,13 @@ package Transaction;
 import Action.Operations;
 
 public class Transaction {
-    private Operations transactionOperation;
-    private TRANSACTIONS transaction;
     private String transactionId;
-    private String variable;
-    private int value;
-    private int siteId;
-
-    public Transaction(Operations transactionOperation, TRANSACTIONS transaction, String transactionId, String variable, int value, int siteId) {
-        this.transactionOperation = transactionOperation;
-        this.transaction = transaction;
+    Boolean isLive;
+    private TransactionType transactionType;
+    public Transaction(String transactionId, TransactionType transactionType) {
         this.transactionId = transactionId;
-        this.variable = variable;
-        this.value = value;
-        this.siteId = siteId;
-    }
-
-    public Operations getOperation() {
-        return transactionOperation;
-    }
-
-    public void setOperation(Operations transactionOperation) {
-        this.transactionOperation = transactionOperation;
-    }
-
-    public TRANSACTIONS getTransaction() {
-        return transaction;
-    }
-
-    public void setTransaction(TRANSACTIONS transaction) {
-        this.transaction = transaction;
+        this.isLive = true;
+        this.transactionType = transactionType;
     }
 
     public String getTransactionId() {
@@ -43,27 +20,12 @@ public class Transaction {
         this.transactionId = transactionId;
     }
 
-    public String getVariable() {
-        return variable;
+    public Boolean getLive() {
+        return isLive;
     }
 
-    public void setVariable(String variable) {
-        this.variable = variable;
+    public void setLive(Boolean live) {
+        isLive = live;
     }
 
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
-
-    public int getSiteId() {
-        return siteId;
-    }
-
-    public void setSiteId(int siteId) {
-        this.siteId = siteId;
-    }
 }
