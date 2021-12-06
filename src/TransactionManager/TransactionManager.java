@@ -16,11 +16,14 @@ public class TransactionManager {
     private Queue<Action> waitQueue;
     private Deadlock deadlock;
     private int tick = 0;
+    private Map<String, List<Site>> variableStieMap;
 
     public TransactionManager(){
         this.transactions = new ArrayList<>();
         this.sites = new ArrayList<>();
         this.deadlock = new Deadlock();
+        this.waitQueue = new LinkedList<Action>();
+        this.variableStieMap = new HashMap<>();
     }
 
     public List<Transaction> getTransactions() {
@@ -37,6 +40,25 @@ public class TransactionManager {
 
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
+    }
+
+    private void readOnlyAction(ReadAction action){
+        List<Site> sites = variableStieMap.get(action.getVariable());
+        boolean isRead = false;
+        if(sites.size()==1 && sites.get(0).getSiteStatus()){
+            isRead = true;
+            System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
+        } else{
+            for(Site site : sites){
+                if(site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())){
+                    isRead = true;
+                    System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
+                    break;
+                }
+            }
+        }
+        if(!isRead)
+            waitQueue.add(action);
     }
 
     private void readAction(ReadAction action) {
@@ -104,13 +126,21 @@ public class TransactionManager {
                 // code block
                 break;
             case READ:
-                // code block
+                if(action instanceof ReadAction){
+                    if(action.getTransaction().getTransactionType() == TransactionType.READONLY){
+                        readOnlyAction((ReadAction) action);
+                    } else if(action.getTransaction().getTransactionType() == TransactionType.BOTH){
+                        readAction((ReadAction) action);
+                    }
+                }
+
                 break;
             case RECOVER:
                 // code block
                 break;
             case WRITE:
-                // code block
+                if(action instanceof WriteAction)
+                    writeAction((WriteAction) action);
                 break;
             default:
                 // code block
@@ -122,16 +152,17 @@ public class TransactionManager {
         IOManager ioManager = new IOManager(filename);
         String line = "";
         while((line= ioManager.readLine()).length()!=0){
+            //Check deadlock and waitQ;
             Action action = null;
             if (line.startsWith("beginRO")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                Transaction transaction = new Transaction(transactionId, TransactionType.READONLY);
+                Transaction transaction = new Transaction(transactionId, TransactionType.READONLY, tick);
                 transactions.add(transaction);
                 action = new BeginRO(transaction);
             }
             else if (line.startsWith("begin")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                Transaction transaction = new Transaction(transactionId, TransactionType.BOTH);
+                Transaction transaction = new Transaction(transactionId, TransactionType.BOTH, tick);
                 transactions.add(transaction);
                 action = new BeginAction(transaction);
             }
