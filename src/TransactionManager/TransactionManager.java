@@ -16,12 +16,14 @@ public class TransactionManager {
     private List<Site> sites;
     private Queue<Action> waitQueue;
     private Deadlock deadlock;
+    private HashMap<String, HashMap<String, Integer>> cache;
     private int tick = 0;
 
     public TransactionManager() {
         this.transactions = new ArrayList<>();
         this.sites = new ArrayList<>();
         this.deadlock = new Deadlock();
+        this.cache = new HashMap<>();
     }
 
     public List<Transaction> getTransactions() {
@@ -86,7 +88,12 @@ public class TransactionManager {
                 }
             }
         } else {
-            //TODO: write to cache
+            HashMap<String, Integer> variables = cache.get(action.getTransaction().getTransactionId());
+            if(variables == null) {
+                variables = new HashMap<>();
+            }
+            variables.put(action.getVariable(), action.getValue());
+            cache.put(action.getTransaction().getTransactionId(), variables);
         }
     }
 
