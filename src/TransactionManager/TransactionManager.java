@@ -6,9 +6,9 @@ import IOManager.IOManager;
 import Lock.Lock;
 import Lock.LockTypes;
 import Site.Site;
-import Transaction.*;
+import Transaction.Transaction;
+import Transaction.TransactionType;
 
-import java.sql.Array;
 import java.util.*;
 
 public class TransactionManager {
@@ -19,14 +19,14 @@ public class TransactionManager {
     private Deadlock deadlock;
     private HashMap<String, HashMap<String, Integer>> cache;
     private int tick = 0;
-    private Map<String, List<Site>> variableStieMap;
+    private Map<String, List<Site>> variableSiteMap;
 
     public TransactionManager() {
         this.transactions = new ArrayList<>();
         this.sites = new ArrayList<>();
         this.deadlock = new Deadlock();
         this.waitQueue = new LinkedList<>();
-        this.variableStieMap = new HashMap<>();
+        this.variableSiteMap = new HashMap<>();
         this.cache = new HashMap<>();
     }
 
@@ -47,7 +47,7 @@ public class TransactionManager {
     }
 
     private void readOnlyAction(ReadAction action){
-        List<Site> sites = variableStieMap.get(action.getVariable());
+        List<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
         if(sites.size()==1 && sites.get(0).getSiteStatus()){
 
@@ -160,7 +160,7 @@ public class TransactionManager {
             for(String variable : s.getLockMap().keySet()){
                 List<Lock> locksToRemove = new ArrayList<>();
                 for(Lock lock : s.getLockMap().get(variable)){
-                    if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                    if(Objects.equals(lock.getTransaction().getTransactionId(), transaction.getTransactionId())){
                         locksToRemove.add(lock);
                     }
                 }
@@ -225,7 +225,7 @@ public class TransactionManager {
 
     public void simulate(String filename) {
         IOManager ioManager = new IOManager(filename);
-        String line = "";
+        String line;
         while((line = ioManager.readLine()) != null){
             //Check deadlock and waitQ;
             Transaction victim = deadlock.resolveDeadlock(transactions);
@@ -270,7 +270,7 @@ public class TransactionManager {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                 Transaction endTransaction = null;
                 for (Transaction t : transactions) {
-                    if (t.getTransactionId() == transactionId) {
+                    if (Objects.equals(t.getTransactionId(), transactionId)) {
                         endTransaction = t;
                         break;
                     }
@@ -285,7 +285,7 @@ public class TransactionManager {
                 String transactionId = fields.split(",")[0];
                 Transaction readTransaction = null;
                 for (Transaction t : transactions) {
-                    if (t.getTransactionId() == transactionId) {
+                    if (Objects.equals(t.getTransactionId(), transactionId)) {
                         readTransaction = t;
                         break;
                     }
@@ -299,7 +299,7 @@ public class TransactionManager {
                 String transactionId = fields.split(",")[0];
                 Transaction writeTransaction = null;
                 for (Transaction t : transactions) {
-                    if (t.getTransactionId() == transactionId) {
+                    if (Objects.equals(t.getTransactionId(), transactionId)) {
                         writeTransaction = t;
                         break;
                     }
