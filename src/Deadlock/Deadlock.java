@@ -1,8 +1,10 @@
 package Deadlock;
 
+import Transaction.Transaction;
 import util.Graph;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Deadlock {
 
@@ -31,5 +33,23 @@ public class Deadlock {
             affectedNodes.add("T" + n);
         }
         return affectedNodes;
+    }
+
+    public String resolveDeadlock(List<Transaction> transactions) {
+        // kill the earliest transaction in the cycle
+        ArrayList<String> affectedNodes = getAffectedTransactions();
+        String earliestTransaction = null;
+        int earliestTime = Integer.MAX_VALUE;
+
+        for(Transaction t : transactions) {
+            for(String node : affectedNodes) {
+                if(t.getTransactionId().equals(node) && t.getStartTime() < earliestTime) {
+                    earliestTime = t.getStartTime();
+                    earliestTransaction = t.getTransactionId();
+                }
+            }
+        }
+        removeEdge(earliestTransaction);
+        return earliestTransaction;
     }
 }
