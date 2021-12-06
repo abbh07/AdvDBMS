@@ -117,12 +117,28 @@ public class Site {
     }
 
     public void acquireLock(String variable, Transaction transaction, LockTypes lockType) {
-        //promote read to write
+        if(lockType == LockTypes.WRITE && promoteReadLock(variable, transaction)) return;
         Lock lock = new Lock(lockType, transaction);
         List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
         lockList.add(lock);
         this.lockMap.put(variable, lockList);
         //call Graph method
+    }
+
+    private boolean promoteReadLock(String variable, Transaction transaction){
+        List<Lock> lockList = this.lockMap.get(variable);
+        if(lockList==null || lockList.size()==0) return false;
+        int index = -1;
+        for (int i=0; i<lockList.size(); i++){
+            Lock lock = lockList.get(i);
+            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                index = i;
+                break;
+            }
+        }
+        if(index == -1) return false;
+        lockList.get(index).setLockType(LockTypes.WRITE);
+        return true;
     }
 
 
