@@ -1,7 +1,7 @@
 package IOManager;
 
 import Action.Operations;
-import Transaction.TRANSACTIONS;
+import Transaction.TransactionType;
 import Transaction.Transaction;
 
 import java.io.BufferedReader;
@@ -44,7 +44,7 @@ public class IOManager {
             String transactionId;
             String variable;
             Operations operation;
-            TRANSACTIONS transaction;
+            TransactionType transaction;
             while (line != null) {
                 siteId = -1;
                 value = -1;
@@ -75,18 +75,18 @@ public class IOManager {
                     transactionId = fields.split(",")[0];
                     variable = fields.split(",")[1];
                     value = Integer.parseInt(fields.split(",")[2]);
-                    transaction = TRANSACTIONS.WRITE;
+                    transaction = TransactionType.BOTH;
                 } else if (line.startsWith("R")) {
                     String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                     transactionId = fields.split(",")[0];
                     if (readOnlyTransactions.contains(transactionId)) {
-                        transaction = TRANSACTIONS.READONLY;
+                        transaction = TransactionType.READONLY;
                     } else {
-                        transaction = TRANSACTIONS.READ;
+                        transaction = TransactionType.BOTH;
                     }
                     variable = fields.split(",")[1];
                 }
-                Transaction t = new Transaction(operation, transaction, transactionId, variable, value, siteId);
+                Transaction t = null;
                 transactions.add(t);
                 line = reader.readLine();
             }
