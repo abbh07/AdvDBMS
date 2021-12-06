@@ -14,6 +14,12 @@ public class Site {
     private TreeMap<Integer, Integer> startEndTimeMap;
     private boolean siteStatus;
 
+    public void addTransaction(Transaction transaction) {
+        this.visitedTransactions.add(transaction);
+    }
+
+    private HashSet<Transaction> visitedTransactions;
+
     public int getSiteId() {
         return siteId;
     }
@@ -52,6 +58,7 @@ public class Site {
         this.dataMap = new HashMap<>();
         this.lockMap = new HashMap<>();
         this.startEndTimeMap = new TreeMap<>();
+        visitedTransactions = new HashSet<>();
     }
 
     public void initData(String key, int value) {

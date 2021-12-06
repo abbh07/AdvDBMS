@@ -50,7 +50,6 @@ public class TransactionManager {
         List<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
         if (sites.size() == 1 && sites.get(0).getSiteStatus()) {
-
             isRead = true;
             System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
         } else {
@@ -74,6 +73,7 @@ public class TransactionManager {
                 Map<String, TreeMap<Integer, Integer>> map = s.getDataMap();
                 if (map.containsKey(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
+                    s.addTransaction(action.getTransaction());
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
@@ -90,7 +90,7 @@ public class TransactionManager {
         boolean isAllAvailable = true;
 
         for (Site s : sites) {
-            if (s.getSiteStatus()) {
+            if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
                 if (!s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE)) {
                     List<Lock> locks = s.getLockMap().get(action.getVariable());
                     for (Lock l : locks) {
@@ -106,18 +106,20 @@ public class TransactionManager {
 
         if (isAllAvailable) {
             for (Site s : sites) {
-                if (s.getSiteStatus()) {
+                if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
-                    s.writeValue(action.getVariable(), action.getValue(), tick);
+                    s.addTransaction(action.getTransaction());
+//                    s.writeValue(action.getVariable(), action.getValue(), tick);
+                    HashMap<String, Integer> variables = cache.get(action.getTransaction().getTransactionId());
+                    if (variables == null) {
+                        variables = new HashMap<>();
+                    }
+                    variables.put(action.getVariable(), action.getValue());
+                    cache.put(action.getTransaction().getTransactionId(), variables);
                 }
             }
         } else {
-            HashMap<String, Integer> variables = cache.get(action.getTransaction().getTransactionId());
-            if (variables == null) {
-                variables = new HashMap<>();
-            }
-            variables.put(action.getVariable(), action.getValue());
-            cache.put(action.getTransaction().getTransactionId(), variables);
+            waitQueue.add(action);
         }
     }
 
