@@ -2,8 +2,8 @@ package Action;
 
 import Transaction.Transaction;
 
-public class BeginRO extends Action{
-    public BeginRO(Transaction transaction){
+public class BeginRoAction extends Action{
+    public BeginRoAction(Transaction transaction){
         this.operation = Operations.BEGINRO;
         this.transaction = transaction;
     }
