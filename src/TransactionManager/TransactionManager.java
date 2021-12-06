@@ -2,16 +2,17 @@ package TransactionManager;
 
 import Action.*;
 import IOManager.IOManager;
+import Lock.LockTypes;
 import Site.Site;
 import Transaction.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class TransactionManager {
 
     private List<Transaction> transactions;
     private List<Site> sites;
+    private Queue<Action> waitQueue;
     private int tick = 0;
 
     public TransactionManager(){
@@ -33,6 +34,25 @@ public class TransactionManager {
 
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
+    }
+
+    private void readAction(ReadAction action) {
+        boolean isAvailable = false;
+
+        for (Site s: sites) {
+            if(s.getSiteStatus()) {
+                Map<String, TreeMap<Integer, Integer>> map = s.getDataMap();
+                if(map.containsKey(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
+                    System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
+                    isAvailable = true;
+                    break;
+                }
+            }
+        }
+
+        if(!isAvailable) {
+            waitQueue.add(action);
+        }
     }
 
     public void processAction(Action action){

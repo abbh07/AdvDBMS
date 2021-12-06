@@ -11,6 +11,11 @@ public class Site {
     private int siteId;
     private Map<String, TreeMap<Integer, Integer>> dataMap;
     private Map<String, List<Lock>> lockMap;
+
+    public boolean getSiteStatus() {
+        return siteStatus;
+    }
+
     private boolean siteStatus;
 
     public int getSiteId() {
