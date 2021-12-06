@@ -11,6 +11,7 @@ public class Site {
     private int siteId;
     private Map<String, TreeMap<Integer, Integer>> dataMap;
     private Map<String, List<Lock>> lockMap;
+    private TreeMap<Integer, Integer> startEndTimeMap;
 
     public boolean getSiteStatus() {
         return siteStatus;
@@ -48,6 +49,7 @@ public class Site {
         this.siteStatus = siteStatus;
         this.dataMap = new HashMap<>();
         this.lockMap = new HashMap<>();
+        this.startEndTimeMap = new TreeMap<>();
     }
 
     public void initData(String key, int value) {
@@ -138,6 +140,29 @@ public class Site {
         }
         if(index == -1) return false;
         lockList.get(index).setLockType(LockTypes.WRITE);
+        return true;
+    }
+
+    public TreeMap<Integer, Integer> getStartEndTimeMap() {
+        return startEndTimeMap;
+    }
+
+    public void setStartEndTimeMap(TreeMap<Integer, Integer> startEndTimeMap) {
+        this.startEndTimeMap = startEndTimeMap;
+    }
+
+    public boolean canAccessReadOnly(String variable, Transaction transaction){
+        int transactionStartTime = transaction.getStartTime();
+        int lastWriteTime = this.dataMap.get(variable).lowerKey(transactionStartTime+1);
+        return isValidForReadOnly(lastWriteTime, transactionStartTime);
+    }
+
+    private boolean isValidForReadOnly(int startTime, int endTime){
+        for(int i=startTime; i<=endTime; i++){
+            int siteUpTime = startEndTimeMap.lowerKey(i+1);
+            if(startEndTimeMap.get(siteUpTime)<=endTime)
+                return false;
+        }
         return true;
     }
 

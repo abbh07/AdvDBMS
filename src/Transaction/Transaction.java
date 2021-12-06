@@ -5,11 +5,15 @@ import Action.Operations;
 public class Transaction {
     private String transactionId;
     Boolean isLive;
+
     private TransactionType transactionType;
-    public Transaction(String transactionId, TransactionType transactionType) {
+
+    private int startTime;
+    public Transaction(String transactionId, TransactionType transactionType, int startTime) {
         this.transactionId = transactionId;
         this.isLive = true;
         this.transactionType = transactionType;
+        this.startTime = startTime;
     }
 
     public String getTransactionId() {
@@ -26,6 +30,22 @@ public class Transaction {
 
     public void setLive(Boolean live) {
         isLive = live;
+    }
+
+    public int getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(int startTime) {
+        this.startTime = startTime;
+    }
+
+    public TransactionType getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(TransactionType transactionType) {
+        this.transactionType = transactionType;
     }
 
 }
