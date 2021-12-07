@@ -305,11 +305,11 @@ public class TransactionManager {
             tick++;
             Action action = null;
             if (line.startsWith("beginRO")) {
-                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
                 Transaction transaction = new Transaction(transactionId, TransactionType.READONLY, tick);
                 action = new BeginRoAction(transaction);
             } else if (line.startsWith("begin")) {
-                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
                 Transaction transaction = new Transaction(transactionId, TransactionType.BOTH, tick);
                 action = new BeginAction(transaction);
             } else if (line.startsWith("fail")) {
@@ -339,7 +339,7 @@ public class TransactionManager {
                     action = new RecoverAction(recoveredSite);
                 }
             } else if (line.startsWith("end")) {
-                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+                String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
                 Transaction endTransaction = null;
                 for (Transaction t : transactions) {
                     if (Objects.equals(t.getTransactionId(), transactionId)) {
@@ -353,8 +353,8 @@ public class TransactionManager {
             } else if (line.startsWith("dump")) {
                 action = new DumpAction();
             } else if (line.startsWith("R")) {
-                String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                String transactionId = fields.split(",")[0];
+                String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+                String transactionId = fields.split(",")[0].trim();
                 Transaction readTransaction = null;
                 for (Transaction t : transactions) {
                     if (Objects.equals(t.getTransactionId(), transactionId)) {
@@ -362,13 +362,13 @@ public class TransactionManager {
                         break;
                     }
                 }
-                String variable = fields.split(",")[1];
+                String variable = fields.split(",")[1].trim();
                 if (readTransaction != null) {
                     action = new ReadAction(readTransaction, variable);
                 }
             } else if (line.startsWith("W")) {
-                String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                String transactionId = fields.split(",")[0];
+                String fields = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+                String transactionId = fields.split(",")[0].trim();
                 Transaction writeTransaction = null;
                 for (Transaction t : transactions) {
                     if (Objects.equals(t.getTransactionId(), transactionId)) {
@@ -376,7 +376,7 @@ public class TransactionManager {
                         break;
                     }
                 }
-                String variable = fields.split(",")[1];
+                String variable = fields.split(",")[1].trim();
                 int value = Integer.parseInt(fields.split(",")[2]);
                 action = new WriteAction(writeTransaction, variable, value);
             }
