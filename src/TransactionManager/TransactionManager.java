@@ -30,27 +30,27 @@ public class TransactionManager {
         this.cache = new HashMap<>();
     }
 
-    public void init(){
-        for(int j=1; j<=10; j++){
+    public void init() {
+        for (int j = 1; j <= 10; j++) {
             Site site = new Site(j);
             sites.add(site);
         }
-        for(int i=1; i<=20; i++){
-            if(i%2==0){
-                for(int j=1; j<=10; j++){
-                    Site site = sites.get(j-1);
-                    site.addDataMap("x"+i, 0, 10*i);
-                    HashSet<Site> set = variableSiteMap.getOrDefault("x"+i, new HashSet<>());
+        for (int i = 1; i <= 20; i++) {
+            if (i % 2 == 0) {
+                for (int j = 1; j <= 10; j++) {
+                    Site site = sites.get(j - 1);
+                    site.addDataMap("x" + i, 0, 10 * i);
+                    HashSet<Site> set = variableSiteMap.getOrDefault("x" + i, new HashSet<>());
                     set.add(site);
-                    variableSiteMap.put("x"+i, set);
+                    variableSiteMap.put("x" + i, set);
                     site.addStartEndTimeMap(0, Integer.MAX_VALUE);
                 }
-            } else{
-                Site site = sites.get((i%10));
-                site.addDataMap("x"+i, 0, 10*i);
-                HashSet<Site> set = variableSiteMap.getOrDefault("x"+i, new HashSet<>());
+            } else {
+                Site site = sites.get((i % 10));
+                site.addDataMap("x" + i, 0, 10 * i);
+                HashSet<Site> set = variableSiteMap.getOrDefault("x" + i, new HashSet<>());
                 set.add(site);
-                variableSiteMap.put("x"+i, set);
+                variableSiteMap.put("x" + i, set);
                 site.addStartEndTimeMap(0, Integer.MAX_VALUE);
             }
         }
@@ -155,8 +155,8 @@ public class TransactionManager {
     }
 
     private void dumpAction(DumpAction action) {
-        for(Site site : sites){
-
+        for (Site site : sites) {
+            site.print();
         }
     }
 
@@ -173,18 +173,16 @@ public class TransactionManager {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
             //Bhatta - cache to write or not?
-            for (HashMap<String, Integer> map : cache.values()) {
-                for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                    String key = entry.getKey();
-                    int val = entry.getValue();
-                    for (Site s : sites) {
-                        if (s.getSiteStatus()) {
-                            Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
-                            if (dataMap.containsKey(key)) {
-                                TreeMap<Integer, Integer> pair = dataMap.get(key);
-                                pair.put(tick, val);
-                                dataMap.put(key, pair);
-                            }
+            for (Map.Entry<String, Integer> entry : cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>()).entrySet()) {
+                String key = entry.getKey();
+                int val = entry.getValue();
+                for (Site s : sites) {
+                    if (s.getSiteStatus()) {
+                        Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
+                        if (dataMap.containsKey(key)) {
+                            TreeMap<Integer, Integer> pair = dataMap.get(key);
+                            pair.put(tick, val);
+                            dataMap.put(key, pair);
                         }
                     }
                 }
@@ -211,6 +209,13 @@ public class TransactionManager {
                 s.getLockMap().get(variable).removeAll(locksToRemove);
             }
         }
+        List<Action> actionsToRemove = new ArrayList<Action>();
+        for(Action action : waitQueue){
+            if(action.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                actionsToRemove.add(action);
+            }
+        }
+        waitQueue.removeAll(actionsToRemove);
         transactions.remove(transaction);
     }
 
@@ -276,7 +281,7 @@ public class TransactionManager {
                 this.processAction(action);
                 //toggle boolean
             }
-            if(size == waitQueue.size()) {
+            if (size == waitQueue.size()) {
                 break;
             }
         }

@@ -39,11 +39,11 @@ public class Deadlock {
         // kill the earliest transaction in the cycle
         ArrayList<String> affectedNodes = getAffectedTransactions();
         Transaction earliestTransaction = null;
-        int earliestTime = Integer.MAX_VALUE;
+        int earliestTime = Integer.MIN_VALUE;
 
         for(Transaction t : transactions) {
             for(String node : affectedNodes) {
-                if(t.getTransactionId().equals(node) && t.getStartTime() < earliestTime) {
+                if(t.getTransactionId().equals(node) && t.getStartTime() > earliestTime) {
                     earliestTime = t.getStartTime();
                     earliestTransaction = t;
                 }
