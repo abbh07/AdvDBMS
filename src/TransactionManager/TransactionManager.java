@@ -155,6 +155,9 @@ public class TransactionManager {
     }
 
     private void dumpAction(DumpAction action) {
+        for(Site site : sites){
+
+        }
     }
 
     private void recoverAction(RecoverAction action) {
@@ -295,7 +298,6 @@ public class TransactionManager {
             if (line.startsWith("beginRO")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                 Transaction transaction = new Transaction(transactionId, TransactionType.READONLY, tick);
-                transactions.add(transaction);
                 action = new BeginRoAction(transaction);
             } else if (line.startsWith("begin")) {
                 String transactionId = line.substring(line.indexOf('(') + 1, line.indexOf(')'));

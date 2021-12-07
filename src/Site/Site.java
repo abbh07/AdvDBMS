@@ -109,7 +109,7 @@ public class Site {
     }
 
     public boolean canAcquireLock(String variable, Transaction transaction, LockTypes lockType) {
-        List<Lock> locksPresent = this.lockMap.get(variable);
+        List<Lock> locksPresent = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
         return (lockType == LockTypes.READ) ? canAcquireReadLock(locksPresent, transaction) : canAcquireWriteLock(locksPresent, transaction);
     }
 
@@ -187,7 +187,7 @@ public class Site {
     private boolean isValidForReadOnly(int startTime, int endTime){
         int siteUpTime = startEndTimeMap.lowerKey(startTime+1);
         for(int i=startTime; i<=endTime; i++){
-            if(startEndTimeMap.get(siteUpTime)>endTime)
+            if(startEndTimeMap.get(siteUpTime)<=endTime)
                 return false;
         }
         return true;
@@ -199,6 +199,6 @@ public class Site {
     }
 
     public void print() {
-        //Implement print
+
     }
 }
