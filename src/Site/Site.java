@@ -16,6 +16,7 @@ public class Site {
     private TreeMap<Integer, Integer> startEndTimeMap;
     private boolean siteStatus;
     private HashSet<Transaction> visitedTransactions;
+    private HashMap<String, Boolean> variableStaleStateMap;
 
     public Site(int siteId) {
         this.siteId = siteId;
@@ -24,6 +25,7 @@ public class Site {
         this.startEndTimeMap = new TreeMap<>();
         this.siteStatus = true;
         this.visitedTransactions = new HashSet<>();
+        this.variableStaleStateMap = new HashMap<>();
     }
 
     public void addDataMap(String key, int time, int value){
@@ -217,5 +219,9 @@ public class Site {
 
     public void setVisitedTransactions(HashSet<Transaction> visitedTransactions) {
         this.visitedTransactions = visitedTransactions;
+    }
+
+    public HashMap<String, Boolean> getVariableStaleStateMap() {
+        return variableStaleStateMap;
     }
 }

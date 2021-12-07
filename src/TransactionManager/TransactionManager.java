@@ -44,6 +44,7 @@ public class TransactionManager {
                     set.add(site);
                     variableSiteMap.put("x" + i, set);
                     site.addStartEndTimeMap(0, Integer.MAX_VALUE);
+                    site.getVariableStaleStateMap().put("x" + i, true);
                 }
             } else {
                 Site site = sites.get((i % 10));
@@ -52,6 +53,7 @@ public class TransactionManager {
                 set.add(site);
                 variableSiteMap.put("x" + i, set);
                 site.addStartEndTimeMap(0, Integer.MAX_VALUE);
+                site.getVariableStaleStateMap().put("x" + i, true);
             }
         }
     }
@@ -175,6 +177,10 @@ public class TransactionManager {
         TreeMap<Integer, Integer> treeMap = site.getStartEndTimeMap();
         treeMap.put(tick, Integer.MAX_VALUE);
         site.setStartEndTimeMap(treeMap);
+        HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
+        for(Boolean entry : staleStateMap.values()) {
+            entry = false;
+        }
     }
 
     private void endAction(EndAction action) {
