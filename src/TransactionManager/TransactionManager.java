@@ -73,7 +73,7 @@ public class TransactionManager {
         this.transactions.add(transaction);
     }
 
-    private void readOnlyAction(ReadAction action) {
+    private void readOnlyAction(ReadAction action, boolean firstAttempt) {
         HashSet<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
         for (Site site : sites) {
@@ -84,11 +84,15 @@ public class TransactionManager {
                 break;
             }
         }
-        if (!isRead)
+        if (!isRead){
+            if(firstAttempt)
+                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
+        }
+
     }
 
-    private void readAction(ReadAction action) {
+    private void readAction(ReadAction action, boolean firstAttempt) {
         boolean isAvailable = false;
 
         for (Site s : sites) {
@@ -105,11 +109,13 @@ public class TransactionManager {
         }
 
         if (!isAvailable) {
+            if(firstAttempt)
+                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
     }
 
-    private void writeAction(WriteAction action) {
+    private void writeAction(WriteAction action, boolean firstAttempt) {
         boolean isAllAvailable = true;
 
         for (Site s : sites) {
@@ -142,6 +148,8 @@ public class TransactionManager {
                 }
             }
         } else {
+            if(firstAttempt)
+                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
     }
@@ -183,22 +191,25 @@ public class TransactionManager {
                             TreeMap<Integer, Integer> pair = dataMap.get(key);
                             pair.put(val.getValue(), val.getKey());
                             dataMap.put(key, pair);
+                            System.out.println("Variable " + key + " is updated on Site "+ s.getSiteId() + " with value " + val.getKey());
                         }
                     }
                 }
             }
             action.getTransaction().setLive(false);
-            cleanUpTransaction(action.getTransaction());
+            cleanUpTransaction(action.getTransaction(), false);
             //Print end
-            System.out.println(action.getTransaction().getTransactionId() + " : ended");
+            System.out.println("Transaction " + action.getTransaction().getTransactionId() + " commits.");
         } else {
             //Print already ended
-            cleanUpTransaction(action.getTransaction());
-            System.out.println(action.getTransaction().getTransactionId() + " : already ended");
+            cleanUpTransaction(action.getTransaction(), true);
         }
     }
 
-    private void cleanUpTransaction(Transaction transaction) {
+    private void cleanUpTransaction(Transaction transaction, boolean isAborted) {
+        if(isAborted){
+            System.out.println("Transaction "+ transaction.getTransactionId() + " is Aborted");
+        }
         for (Site s : sites) {
             for (String variable : s.getLockMap().keySet()) {
                 List<Lock> locksToRemove = new ArrayList<>();
@@ -230,7 +241,7 @@ public class TransactionManager {
         }
     }
 
-    public void processAction(Action action) {
+    public void processAction(Action action, boolean firstAttempt) {
         Operations actionType = action.getOperation();
         switch (actionType) {
             case BEGIN:
@@ -256,9 +267,9 @@ public class TransactionManager {
             case READ:
                 if (action instanceof ReadAction) {
                     if (action.getTransaction().getTransactionType() == TransactionType.READONLY) {
-                        readOnlyAction((ReadAction) action);
+                        readOnlyAction((ReadAction) action, firstAttempt);
                     } else if (action.getTransaction().getTransactionType() == TransactionType.BOTH) {
-                        readAction((ReadAction) action);
+                        readAction((ReadAction) action, firstAttempt);
                     }
                 }
                 break;
@@ -268,7 +279,7 @@ public class TransactionManager {
                 break;
             case WRITE:
                 if (action instanceof WriteAction)
-                    writeAction((WriteAction) action);
+                    writeAction((WriteAction) action, firstAttempt);
                 break;
             default:
                 // code block
@@ -282,7 +293,7 @@ public class TransactionManager {
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                this.processAction(action);
+                this.processAction(action, false);
                 //toggle boolean
             }
             if (size == waitQueue.size()) {
@@ -298,7 +309,7 @@ public class TransactionManager {
             //Check deadlock and waitQ;
             if (deadlock.checkForDeadlock()) {
                 Transaction victim = deadlock.resolveDeadlock(transactions);
-                cleanUpTransaction(victim);
+                cleanUpTransaction(victim, true);
             }
             resolveQueue();
 
@@ -381,7 +392,7 @@ public class TransactionManager {
                 action = new WriteAction(writeTransaction, variable, value);
             }
             if (action != null)
-                this.processAction(action);
+                this.processAction(action, true);
         }
     }
 }
