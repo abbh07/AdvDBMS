@@ -15,6 +15,7 @@ public class Site {
     private Map<String, List<Lock>> lockMap;
     private TreeMap<Integer, Integer> startEndTimeMap;
     private boolean siteStatus;
+    private HashSet<Transaction> visitedTransactions;
 
     public Site(int siteId) {
         this.siteId = siteId;
@@ -45,7 +46,7 @@ public class Site {
         this.visitedTransactions.add(transaction);
     }
 
-    private HashSet<Transaction> visitedTransactions;
+
 
     public int getSiteId() {
         return siteId;
@@ -205,5 +206,13 @@ public class Site {
             System.out.print(key + ":" + this.dataMap.get(key).get(latestTime) + " ");
         }
         System.out.println();
+    }
+
+    public HashSet<Transaction> getVisitedTransactions() {
+        return visitedTransactions;
+    }
+
+    public void setVisitedTransactions(HashSet<Transaction> visitedTransactions) {
+        this.visitedTransactions = visitedTransactions;
     }
 }

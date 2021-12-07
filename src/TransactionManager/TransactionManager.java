@@ -193,6 +193,7 @@ public class TransactionManager {
             System.out.println(action.getTransaction().getTransactionId() + " : ended");
         } else {
             //Print already ended
+            cleanUpTransaction(action.getTransaction());
             System.out.println(action.getTransaction().getTransactionId() + " : already ended");
         }
     }
@@ -224,6 +225,9 @@ public class TransactionManager {
         site.setSiteStatus(false);
         site.setLockMap(new HashMap<>());
         site.setEndTime(tick);
+        for(Transaction t : site.getVisitedTransactions()){
+            t.setLive(false);
+        }
     }
 
     public void processAction(Action action) {
