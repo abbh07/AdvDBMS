@@ -1,8 +1,6 @@
 package util;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Graph {
     private static final int totalVertices = 100;
@@ -64,5 +62,8 @@ public class Graph {
 
     public void removeEdge(int source) {
         adj.get(source).clear();
+        for (int i = 0; i < adj.size(); i++) {
+            adj.get(i).removeAll(Collections.singleton(source));
+        }
     }
 }
