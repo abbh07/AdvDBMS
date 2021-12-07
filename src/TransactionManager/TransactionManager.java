@@ -30,6 +30,27 @@ public class TransactionManager {
         this.cache = new HashMap<>();
     }
 
+    public void init(){
+        for(int j=1; j<=10; j++){
+            Site site = new Site(j);
+            sites.add(site);
+        }
+        for(int i=1; i<=20; i++){
+            if(i%2==0){
+                for(int j=1; j<=10; j++){
+                    Site site = sites.get(j-1);
+                    site.addDataMap("x"+i, 0, 10*i);
+                    site.addStartEndTimeMap(0, Integer.MAX_VALUE);
+                }
+            } else{
+                Site site = sites.get((i%10));
+                site.addDataMap("x"+i, 0, 10*i);
+                site.addStartEndTimeMap(0, Integer.MAX_VALUE);
+            }
+        }
+    }
+
+
     public List<Transaction> getTransactions() {
         return this.transactions;
     }

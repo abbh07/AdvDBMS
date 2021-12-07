@@ -4,15 +4,43 @@ import Lock.Lock;
 import Lock.LockTypes;
 import Transaction.Transaction;
 
+import java.sql.Array;
 import java.util.*;
 
 public class Site {
+
+
     private static final int totalVariables = 20;
     private int siteId;
     private Map<String, TreeMap<Integer, Integer>> dataMap;
     private Map<String, List<Lock>> lockMap;
     private TreeMap<Integer, Integer> startEndTimeMap;
     private boolean siteStatus;
+
+    public Site(int siteId) {
+        this.siteId = siteId;
+        this.dataMap = new HashMap<>();
+        this.lockMap = new HashMap<>();
+        this.startEndTimeMap = new TreeMap<>();
+        this.siteStatus = true;
+        this.visitedTransactions = new HashSet<>();
+    }
+
+    public void addDataMap(String key, int time, int value){
+        TreeMap<Integer, Integer> mapValue = this.dataMap.getOrDefault(key, new TreeMap<>());
+        mapValue.put(time, value);
+        this.dataMap.put(key, mapValue);
+    }
+
+    public void addLockMap(String key, Lock lock){
+        List<Lock> locks = this.lockMap.getOrDefault(key, new ArrayList<Lock>());
+        locks.add(lock);
+        this.lockMap.put(key, locks);
+    }
+
+    public void addStartEndTimeMap(int key, int value){
+        this.startEndTimeMap.put(key, value);
+    }
 
     public void addTransaction(Transaction transaction) {
         this.visitedTransactions.add(transaction);
@@ -50,15 +78,6 @@ public class Site {
 
     public void setSiteStatus(boolean siteStatus) {
         this.siteStatus = siteStatus;
-    }
-
-    public Site(int siteId, boolean siteStatus) {
-        this.siteId = siteId;
-        this.siteStatus = siteStatus;
-        this.dataMap = new HashMap<>();
-        this.lockMap = new HashMap<>();
-        this.startEndTimeMap = new TreeMap<>();
-        visitedTransactions = new HashSet<>();
     }
 
     public void initData(String key, int value) {
