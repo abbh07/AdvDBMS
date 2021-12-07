@@ -7,6 +7,7 @@ public class Main {
         String filename = new File("/Users/shobhitsinha/Documents/Course/Sem-2/ADB/proj/AdvDBMS/input/input0").getAbsolutePath();
 
         TransactionManager transactionManager = new TransactionManager();
+        transactionManager.init();
         transactionManager.simulate(filename);
 
     }
