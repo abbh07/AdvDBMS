@@ -17,7 +17,7 @@ public class TransactionManager {
     private List<Site> sites;
     private Queue<Action> waitQueue;
     private Deadlock deadlock;
-    private HashMap<String, HashMap<String, Integer>> cache;
+    private HashMap<String, HashMap<String, Map.Entry<Integer, Integer>>> cache;
     private int tick = 0;
     private Map<String, HashSet<Site>> variableSiteMap;
 
@@ -133,11 +133,11 @@ public class TransactionManager {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
                     s.addTransaction(action.getTransaction());
 //                    s.writeValue(action.getVariable(), action.getValue(), tick);
-                    HashMap<String, Integer> variables = cache.get(action.getTransaction().getTransactionId());
+                    HashMap<String, Map.Entry<Integer, Integer>> variables = cache.get(action.getTransaction().getTransactionId());
                     if (variables == null) {
                         variables = new HashMap<>();
                     }
-                    variables.put(action.getVariable(), action.getValue());
+                    variables.put(action.getVariable(), Map.entry(action.getValue(), tick));
                     cache.put(action.getTransaction().getTransactionId(), variables);
                 }
             }
@@ -173,15 +173,15 @@ public class TransactionManager {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
             //Bhatta - cache to write or not?
-            for (Map.Entry<String, Integer> entry : cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>()).entrySet()) {
+            for (Map.Entry<String, Map.Entry<Integer, Integer>> entry : cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>()).entrySet()) {
                 String key = entry.getKey();
-                int val = entry.getValue();
+                Map.Entry<Integer, Integer> val = entry.getValue();
                 for (Site s : sites) {
                     if (s.getSiteStatus()) {
                         Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
                         if (dataMap.containsKey(key)) {
                             TreeMap<Integer, Integer> pair = dataMap.get(key);
-                            pair.put(tick, val);
+                            pair.put(val.getValue(), val.getKey());
                             dataMap.put(key, pair);
                         }
                     }
@@ -211,8 +211,8 @@ public class TransactionManager {
             }
         }
         List<Action> actionsToRemove = new ArrayList<Action>();
-        for(Action action : waitQueue){
-            if(action.getTransaction().getTransactionId() == transaction.getTransactionId()){
+        for (Action action : waitQueue) {
+            if (action.getTransaction().getTransactionId() == transaction.getTransactionId()) {
                 actionsToRemove.add(action);
             }
         }
@@ -225,7 +225,7 @@ public class TransactionManager {
         site.setSiteStatus(false);
         site.setLockMap(new HashMap<>());
         site.setEndTime(tick);
-        for(Transaction t : site.getVisitedTransactions()){
+        for (Transaction t : site.getVisitedTransactions()) {
             t.setLive(false);
         }
     }
