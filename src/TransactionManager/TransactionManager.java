@@ -79,7 +79,7 @@ public class TransactionManager {
         HashSet<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
         for (Site site : sites) {
-            if (site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
+            if (site.getSiteStatus() && site.getVariableStaleStateMap().get(action.getVariable()) && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                 isRead = true;
                 site.addTransaction(action.getTransaction());
                 System.out.println(action.getVariable() + ": " + site.getLatestValue(action.getVariable()));
@@ -100,7 +100,7 @@ public class TransactionManager {
         for (Site s : sites) {
             if (s.getSiteStatus()) {
                 Map<String, TreeMap<Integer, Integer>> map = s.getDataMap();
-                if (map.containsKey(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
+                if (map.containsKey(action.getVariable()) && s.getVariableStaleStateMap().get(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     s.addTransaction(action.getTransaction());
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
@@ -177,8 +177,8 @@ public class TransactionManager {
         treeMap.put(tick, Integer.MAX_VALUE);
         site.setStartEndTimeMap(treeMap);
         HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
-        for(Boolean entry : staleStateMap.values()) {
-            entry = true;
+        for(String entry : staleStateMap.keySet()) {
+            staleStateMap.put(entry, true);
         }
     }
 
