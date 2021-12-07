@@ -17,7 +17,7 @@ public class TransactionManager {
     private List<Site> sites;
     private Queue<Action> waitQueue;
     private Deadlock deadlock;
-    private HashMap<String, HashMap<String, Map.Entry<Integer, Integer>>> cache;
+    private HashMap<String, HashMap<String, List<Map.Entry<Integer, Integer>>>> cache;
     private int tick = 0;
     private Map<String, HashSet<Site>> variableSiteMap;
 
@@ -84,8 +84,8 @@ public class TransactionManager {
                 break;
             }
         }
-        if (!isRead){
-            if(firstAttempt)
+        if (!isRead) {
+            if (firstAttempt)
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
@@ -109,7 +109,7 @@ public class TransactionManager {
         }
 
         if (!isAvailable) {
-            if(firstAttempt)
+            if (firstAttempt)
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
@@ -139,16 +139,16 @@ public class TransactionManager {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
                     s.addTransaction(action.getTransaction());
 //                    s.writeValue(action.getVariable(), action.getValue(), tick);
-                    HashMap<String, Map.Entry<Integer, Integer>> variables = cache.get(action.getTransaction().getTransactionId());
-                    if (variables == null) {
-                        variables = new HashMap<>();
-                    }
-                    variables.put(action.getVariable(), Map.entry(action.getValue(), tick));
+                    HashMap<String, List<Map.Entry<Integer, Integer>>> variables = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>());
+
+                    List<Map.Entry<Integer, Integer>> listPair = variables.getOrDefault(action.getVariable(), new ArrayList<>());
+                    listPair.add(Map.entry(tick, action.getValue()));
+                    variables.put(action.getVariable(), listPair);
                     cache.put(action.getTransaction().getTransactionId(), variables);
                 }
             }
         } else {
-            if(firstAttempt)
+            if (firstAttempt)
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
@@ -181,17 +181,20 @@ public class TransactionManager {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
             //Bhatta - cache to write or not?
-            for (Map.Entry<String, Map.Entry<Integer, Integer>> entry : cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>()).entrySet()) {
+            HashMap<String, List<Map.Entry<Integer, Integer>>> transactionData = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>());
+
+            for (Map.Entry<String, List<Map.Entry<Integer, Integer>>> entry : transactionData.entrySet()) {
                 String key = entry.getKey();
-                Map.Entry<Integer, Integer> val = entry.getValue();
-                for (Site s : sites) {
-                    if (s.getSiteStatus()) {
-                        Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
-                        if (dataMap.containsKey(key)) {
-                            TreeMap<Integer, Integer> pair = dataMap.get(key);
-                            pair.put(val.getValue(), val.getKey());
-                            dataMap.put(key, pair);
-                            System.out.println("Variable " + key + " is updated on Site "+ s.getSiteId() + " with value " + val.getKey());
+                for (Map.Entry<Integer, Integer> val : entry.getValue()) {
+                    for (Site s : sites) {
+                        if (s.getSiteStatus()) {
+                            Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
+                            if (dataMap.containsKey(key)) {
+                                TreeMap<Integer, Integer> pair = dataMap.get(key);
+                                pair.put(val.getKey(), val.getValue());
+                                dataMap.put(key, pair);
+                                System.out.println("Variable " + key + " is updated on Site " + s.getSiteId() + " with value " + val.getValue());
+                            }
                         }
                     }
                 }
@@ -207,8 +210,8 @@ public class TransactionManager {
     }
 
     private void cleanUpTransaction(Transaction transaction, boolean isAborted) {
-        if(isAborted){
-            System.out.println("Transaction "+ transaction.getTransactionId() + " is Aborted");
+        if (isAborted) {
+            System.out.println("Transaction " + transaction.getTransactionId() + " is Aborted");
         }
         for (Site s : sites) {
             for (String variable : s.getLockMap().keySet()) {
