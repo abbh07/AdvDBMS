@@ -125,6 +125,9 @@ public class Site {
 
     private boolean canAcquireWriteLock(List<Lock> locksPresent, Transaction transaction) {
         for(Lock lock : locksPresent){
+            if(lock.getLockType() == LockTypes.WRITE && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+                return true;
+            }
             if(lock.getLockType() == LockTypes.READ && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
                 continue;
             }
