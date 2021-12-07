@@ -96,16 +96,26 @@ public class TransactionManager {
 
     private void readAction(ReadAction action, boolean firstAttempt) {
         boolean isAvailable = false;
+        HashSet<Site> allValidSites = variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>());
+        boolean dependencyFound = false;
 
-        for (Site s : sites) {
-            if (s.getSiteStatus()) {
-                Map<String, TreeMap<Integer, Integer>> map = s.getDataMap();
-                if (map.containsKey(action.getVariable()) && s.getVariableStaleStateMap().get(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
+        for (Site s : allValidSites) {
+            if (s.getSiteStatus() && !dependencyFound) {
+                if (s.getVariableStaleStateMap().get(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     s.addTransaction(action.getTransaction());
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
+                }
+                else {
+                    for(Lock lock : s.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
+                        if(lock.getLockType().equals(LockTypes.WRITE)) {
+                            deadlock.addEdge(action.getTransaction().getTransactionId(), lock.getTransaction().getTransactionId());
+                            dependencyFound = true;
+                            break;
+                        }
+                    }
                 }
             }
         }

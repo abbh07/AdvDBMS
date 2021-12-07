@@ -218,7 +218,22 @@ public class Site {
 
     public void print() {
         System.out.print("site " + this.siteId + " - ");
-        for(String key : this.dataMap.keySet() ){
+        ArrayList<String> sortedKeys = new ArrayList<>();
+        for(String key : this.dataMap.keySet()) {
+            sortedKeys.add(key);
+        }
+        Collections.sort(sortedKeys, new Comparator<String>() {
+            public int compare(String s1, String s2) {
+                return parseInteger(s1) - parseInteger(s2);
+            }
+
+            int parseInteger(String s) {
+                String num = s.replaceAll("\\D", "");
+                // return 0 if no digits found
+                return num.isEmpty() ? 0 : Integer.parseInt(num);
+            }
+        });
+        for(String key : sortedKeys ){
             int latestTime = this.dataMap.get(key).lastKey();
             System.out.print(key + ":" + this.dataMap.get(key).get(latestTime) + " ");
         }
