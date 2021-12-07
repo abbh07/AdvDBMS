@@ -151,7 +151,19 @@ public class Site {
         //call graph
     }
 
+    private boolean lockAlreadyPresent(String variable, Transaction transaction, LockTypes lockType){
+        List<Lock> lockList = this.lockMap.get(variable);
+        if(lockList==null || lockList.size()==0) return false;
+        for(Lock lock : lockList){
+            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId() &&
+                    (lock.getLockType() == lockType || (lockType == LockTypes.READ && lock.getLockType() == LockTypes.WRITE )))
+                return true;
+        }
+        return false;
+    }
+
     public void acquireLock(String variable, Transaction transaction, LockTypes lockType) {
+        if(lockAlreadyPresent(variable, transaction, lockType)) return;
         if(lockType == LockTypes.WRITE && promoteReadLock(variable, transaction)) return;
         Lock lock = new Lock(lockType, transaction);
         List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
