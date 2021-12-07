@@ -19,7 +19,7 @@ public class TransactionManager {
     private Deadlock deadlock;
     private HashMap<String, HashMap<String, Integer>> cache;
     private int tick = 0;
-    private Map<String, List<Site>> variableSiteMap;
+    private Map<String, HashSet<Site>> variableSiteMap;
 
     public TransactionManager() {
         this.transactions = new ArrayList<>();
@@ -40,11 +40,17 @@ public class TransactionManager {
                 for(int j=1; j<=10; j++){
                     Site site = sites.get(j-1);
                     site.addDataMap("x"+i, 0, 10*i);
+                    HashSet<Site> set = variableSiteMap.getOrDefault("x"+i, new HashSet<>());
+                    set.add(site);
+                    variableSiteMap.put("x"+i, set);
                     site.addStartEndTimeMap(0, Integer.MAX_VALUE);
                 }
             } else{
                 Site site = sites.get((i%10));
                 site.addDataMap("x"+i, 0, 10*i);
+                HashSet<Site> set = variableSiteMap.getOrDefault("x"+i, new HashSet<>());
+                set.add(site);
+                variableSiteMap.put("x"+i, set);
                 site.addStartEndTimeMap(0, Integer.MAX_VALUE);
             }
         }
@@ -68,20 +74,14 @@ public class TransactionManager {
     }
 
     private void readOnlyAction(ReadAction action) {
-        List<Site> sites = variableSiteMap.get(action.getVariable());
+        HashSet<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
-        if (sites.size() == 1 && sites.get(0).getSiteStatus() && sites.get(0).canAccessReadOnly(action.getVariable(), action.getTransaction())) {
-            isRead = true;
-            sites.get(0).addTransaction(action.getTransaction());
-            System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
-        } else {
-            for (Site site : sites) {
-                if (site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
-                    isRead = true;
-                    site.addTransaction(action.getTransaction());
-                    System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
-                    break;
-                }
+        for (Site site : sites) {
+            if (site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
+                isRead = true;
+                site.addTransaction(action.getTransaction());
+                System.out.println(action.getVariable() + ": " + site.getLatestValue(action.getVariable()));
+                break;
             }
         }
         if (!isRead)

@@ -185,7 +185,7 @@ public class Site {
     }
 
     private boolean isValidForReadOnly(int startTime, int endTime){
-        int siteUpTime = startEndTimeMap.lowerKey(startTime);
+        int siteUpTime = startEndTimeMap.lowerKey(startTime+1);
         for(int i=startTime; i<=endTime; i++){
             if(startEndTimeMap.get(siteUpTime)>endTime)
                 return false;
