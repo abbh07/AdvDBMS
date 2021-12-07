@@ -44,7 +44,7 @@ public class TransactionManager {
                     set.add(site);
                     variableSiteMap.put("x" + i, set);
                     site.addStartEndTimeMap(0, Integer.MAX_VALUE);
-                    site.getVariableStaleStateMap().put("x" + i, true);
+                    site.getVariableStaleStateMap().put("x" + i, false);
                 }
             } else {
                 Site site = sites.get((i % 10));
@@ -53,7 +53,7 @@ public class TransactionManager {
                 set.add(site);
                 variableSiteMap.put("x" + i, set);
                 site.addStartEndTimeMap(0, Integer.MAX_VALUE);
-                site.getVariableStaleStateMap().put("x" + i, true);
+                site.getVariableStaleStateMap().put("x" + i, false);
             }
         }
     }
@@ -140,7 +140,6 @@ public class TransactionManager {
                 if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
                     s.addTransaction(action.getTransaction());
-//                    s.writeValue(action.getVariable(), action.getValue(), tick);
                     HashMap<String, List<Map.Entry<Integer, Integer>>> variables = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>());
 
                     List<Map.Entry<Integer, Integer>> listPair = variables.getOrDefault(action.getVariable(), new ArrayList<>());
@@ -179,7 +178,7 @@ public class TransactionManager {
         site.setStartEndTimeMap(treeMap);
         HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
         for(Boolean entry : staleStateMap.values()) {
-            entry = false;
+            entry = true;
         }
     }
 
@@ -199,6 +198,7 @@ public class TransactionManager {
                                 TreeMap<Integer, Integer> pair = dataMap.get(key);
                                 pair.put(val.getKey(), val.getValue());
                                 dataMap.put(key, pair);
+                                s.getVariableStaleStateMap().put(key, false);
                                 System.out.println("Variable " + key + " is updated on Site " + s.getSiteId() + " with value " + val.getValue());
                             }
                         }
