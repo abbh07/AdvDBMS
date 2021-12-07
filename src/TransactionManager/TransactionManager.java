@@ -49,13 +49,15 @@ public class TransactionManager {
     private void readOnlyAction(ReadAction action) {
         List<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
-        if (sites.size() == 1 && sites.get(0).getSiteStatus()) {
+        if (sites.size() == 1 && sites.get(0).getSiteStatus() && sites.get(0).canAccessReadOnly(action.getVariable(), action.getTransaction())) {
             isRead = true;
+            sites.get(0).addTransaction(action.getTransaction());
             System.out.println(action.getVariable() + ": " + sites.get(0).getValue(action.getVariable(), action.getTransaction().getStartTime()));
         } else {
             for (Site site : sites) {
                 if (site.getSiteStatus() && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                     isRead = true;
+                    site.addTransaction(action.getTransaction());
                     System.out.println(action.getVariable() + ": " + sites.get(0).getLatestValue(action.getVariable()));
                     break;
                 }
