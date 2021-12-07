@@ -199,6 +199,11 @@ public class Site {
     }
 
     public void print() {
-
+        System.out.print("site " + this.siteId + " - ");
+        for(String key : this.dataMap.keySet() ){
+            int latestTime = this.dataMap.get(key).lastKey();
+            System.out.print(key + ":" + this.dataMap.get(key).get(latestTime) + " ");
+        }
+        System.out.println();
     }
 }
