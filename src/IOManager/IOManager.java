@@ -1,3 +1,7 @@
+/**
+ * @author Aakash Bhattacharya
+ * @version 1.0.0
+ */
 package IOManager;
 
 import java.io.BufferedReader;
@@ -7,19 +11,31 @@ import java.io.IOException;
 public class IOManager {
     private BufferedReader reader;
 
-    public IOManager(String filename){
-        try{
+    /**
+     * Creates an instance of BufferedReader with the specified filename.
+     *
+     * @param filename Name of the file
+     * @throws IOException when the specified file is not found
+     */
+    public IOManager(String filename) {
+        try {
             reader = new BufferedReader(new FileReader(filename));
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public String readLine(){
+    /**
+     * Reads a line and returns it.
+     *
+     * @return String of the line read
+     * @throws IOException when the next line is not read
+     */
+    public String readLine() {
         String line = "";
-        try{
+        try {
             line = reader.readLine();
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return line;
