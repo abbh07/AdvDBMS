@@ -81,7 +81,7 @@ public class TransactionManager {
             if (site.getSiteStatus() && !site.getVariableStaleStateMap().get(action.getVariable()) && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                 isRead = true;
                 site.addTransaction(action.getTransaction());
-                System.out.println(action.getVariable() + ": " + site.getValue(action.getVariable(), action.getTransaction().getStartTime()));
+                System.out.println(action.getTransaction().getTransactionId() + ": " +action.getVariable() + ": " + site.getValue(action.getVariable(), action.getTransaction().getStartTime()));
                 break;
             }
         }
@@ -103,7 +103,7 @@ public class TransactionManager {
                 if (s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     s.addTransaction(action.getTransaction());
-                    System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
+                    System.out.println(action.getTransaction().getTransactionId() + ": " +action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
                 } else {
@@ -215,6 +215,7 @@ public class TransactionManager {
                         int valueOfCache = c.getPair().get(timeOfCache);
                         site.getDataMap().get(variable).put(timeOfCache, valueOfCache);
                         System.out.println("Variable " + variable + " is updated on Site " + site.getSiteId() + " with value " + valueOfCache);
+                        site.getVariableStaleStateMap().put(variable, false);
                     }
                 }
             }
@@ -399,7 +400,7 @@ public class TransactionManager {
                 Transaction transaction = new Transaction(transactionId, TransactionType.BOTH, tick);
                 action = new BeginAction(transaction);
             } else if (line.startsWith("fail")) {
-                int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
+                int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim());
                 Site failedSite = null;
                 for (Site s : sites) {
                     if (s.getSiteId() == siteId) {
@@ -413,7 +414,7 @@ public class TransactionManager {
                     System.out.println("Can't fail the site as it doesn't exist");
                 }
             } else if (line.startsWith("recover")) {
-                int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
+                int siteId = Integer.parseInt(line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim());
                 Site recoveredSite = null;
                 for (Site s : sites) {
                     if (s.getSiteId() == siteId) {
@@ -463,7 +464,7 @@ public class TransactionManager {
                     }
                 }
                 String variable = fields.split(",")[1].trim();
-                int value = Integer.parseInt(fields.split(",")[2]);
+                int value = Integer.parseInt(fields.split(",")[2].trim());
                 action = new WriteAction(writeTransaction, variable, value);
             }
             if (action != null) {
