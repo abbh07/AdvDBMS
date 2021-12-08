@@ -17,6 +17,10 @@ import util.Cache;
 
 import java.util.*;
 
+/**
+ * The main class of the program which interacts with IOManager, Site, Deadlock, Lock to run the simulation.
+ * Contains constructor, getters and setters.
+ */
 public class TransactionManager {
 
     private int tick = 0;
