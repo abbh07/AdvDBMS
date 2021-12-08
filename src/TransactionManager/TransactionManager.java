@@ -308,11 +308,11 @@ public class TransactionManager {
 
     }
 
-    private boolean conflictWithWaitQueue(Queue<Action> queue, Action action) {
-        return action.getOperation() == Operations.READ ? conflictWithWaitQueueRead(queue, (ReadAction) action) : conflictWithWaitQueueWrite(queue, (WriteAction) action);
+    private boolean conflictWithWaitQueue(Queue<Action> queue, Action action, boolean firstAttempt) {
+        return action.getOperation() == Operations.READ ? conflictWithWaitQueueRead(queue, (ReadAction) action, firstAttempt) : conflictWithWaitQueueWrite(queue, (WriteAction) action, firstAttempt);
     }
 
-    private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action) {
+    private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action, boolean firstAttempt) {
         for (Action actionToCheck : queue) {
             if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
@@ -326,6 +326,8 @@ public class TransactionManager {
                         }
                     }
                 }
+                if (firstAttempt)
+                    System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
                 deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                 waitQueue.add(action);
                 return true;
@@ -334,7 +336,7 @@ public class TransactionManager {
         return false;
     }
 
-    private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action) {
+    private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action, boolean firstAttempt) {
         for (Action actionToCheck : queue) {
             if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
@@ -344,6 +346,8 @@ public class TransactionManager {
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
                     for (Lock lock : site.getLockMap().get(action.getVariable())) {
                         if (!lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()) || lock.getLockType() != LockTypes.WRITE) {
+                            if (firstAttempt)
+                                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
                             deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                             waitQueue.add(action);
                             return true;
@@ -363,7 +367,7 @@ public class TransactionManager {
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                if (!conflictWithWaitQueue(actionsToCheck, action)) {
+                if (!conflictWithWaitQueue(actionsToCheck, action, false)) {
                     actionsToCheck.add(action);
                     this.processAction(action, false);
                 }
@@ -464,7 +468,7 @@ public class TransactionManager {
                 action = new WriteAction(writeTransaction, variable, value);
             }
             if (action != null) {
-                if ((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action))
+                if ((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action, true))
                     continue;
                 this.processAction(action, true);
             }
