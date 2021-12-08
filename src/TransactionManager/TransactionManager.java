@@ -78,10 +78,10 @@ public class TransactionManager {
         HashSet<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
         for (Site site : sites) {
-            if (site.getSiteStatus() && site.getVariableStaleStateMap().get(action.getVariable()) && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
+            if (site.getSiteStatus() && !site.getVariableStaleStateMap().get(action.getVariable()) && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                 isRead = true;
                 site.addTransaction(action.getTransaction());
-                System.out.println(action.getVariable() + ": " + site.getLatestValue(action.getVariable()));
+                System.out.println(action.getVariable() + ": " + site.getValue(action.getVariable(), action.getTransaction().getStartTime()));
                 break;
             }
         }
