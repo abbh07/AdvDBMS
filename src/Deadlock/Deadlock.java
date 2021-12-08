@@ -11,6 +11,10 @@ import util.Graph;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A class which packages the deadlock scenario. It interacts with the Graph class for computation. This class is a wrapper over the Graph class.
+ * Contains a constructor.
+ */
 public class Deadlock {
 
     private Graph graph;

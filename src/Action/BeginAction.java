@@ -7,8 +7,11 @@ package Action;
 
 import Transaction.Transaction;
 
+/**
+ * The BeginAction subclass with a constructor.
+ */
 public class BeginAction extends Action {
-    public BeginAction(Transaction transaction){
+    public BeginAction(Transaction transaction) {
         this.operation = Operations.BEGIN;
         this.transaction = transaction;
     }

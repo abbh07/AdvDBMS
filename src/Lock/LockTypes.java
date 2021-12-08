@@ -5,6 +5,9 @@
  */
 package Lock;
 
+/**
+ * An enum holding the LockTypes.
+ */
 public enum LockTypes {
     READ,
     WRITE,

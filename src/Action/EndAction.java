@@ -7,8 +7,11 @@ package Action;
 
 import Transaction.Transaction;
 
+/**
+ * EndAction subclass with a constructor.
+ */
 public class EndAction extends Action {
-    public EndAction(Transaction transaction){
+    public EndAction(Transaction transaction) {
         this.operation = Operations.END;
         this.transaction = transaction;
     }

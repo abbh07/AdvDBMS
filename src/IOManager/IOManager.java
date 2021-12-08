@@ -9,6 +9,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * A class which handles IO from a file. Contains a constructor which takes in a filename.
+ */
 public class IOManager {
     private BufferedReader reader;
 

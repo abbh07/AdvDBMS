@@ -7,12 +7,17 @@ package Action;
 
 import Site.Site;
 
-public class RecoverAction extends Action{
+/**
+ * RecoverAction subclass with a constructor and getters/setters.
+ */
+public class RecoverAction extends Action {
     private Site site;
-    public RecoverAction(Site site){
+
+    public RecoverAction(Site site) {
         this.operation = Operations.RECOVER;
         this.site = site;
     }
+
     public Site getSite() {
         return site;
     }

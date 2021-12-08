@@ -7,12 +7,17 @@ package Action;
 
 import Site.Site;
 
-public class FailAction extends Action{
+/**
+ * FailAction subclass with a constructor and getters and setters.
+ */
+public class FailAction extends Action {
     private Site site;
-    public FailAction(Site site){
+
+    public FailAction(Site site) {
         this.operation = Operations.FAIL;
         this.site = site;
     }
+
     public Site getSite() {
         return site;
     }

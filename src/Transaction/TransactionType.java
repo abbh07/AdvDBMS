@@ -5,6 +5,9 @@
  */
 package Transaction;
 
+/**
+ * An enum of different transaction types.
+ */
 public enum TransactionType {
     BOTH,
     READONLY

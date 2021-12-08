@@ -5,6 +5,10 @@
  */
 package Transaction;
 
+/**
+ * Transaction class holding the TransactionId, its type and a boolean.
+ * The class contains a constructor along with appropriate getters and setters.
+ */
 public class Transaction {
     private String transactionId;
     Boolean isLive;
@@ -12,6 +16,7 @@ public class Transaction {
     private TransactionType transactionType;
 
     private int startTime;
+
     public Transaction(String transactionId, TransactionType transactionType, int startTime) {
         this.transactionId = transactionId;
         this.isLive = true;

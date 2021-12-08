@@ -7,8 +7,11 @@ package Action;
 
 import Transaction.Transaction;
 
+/**
+ * The Action base class with getters and setters.
+ */
 public class Action {
-    protected Operations operation ;
+    protected Operations operation;
     protected Transaction transaction;
 
     public Operations getOperation() {

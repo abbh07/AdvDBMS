@@ -12,8 +12,10 @@ import util.Cache;
 
 import java.util.*;
 
+/**
+ * A class packaging a Site with all its contents, locks, data, cache along with its getters and setters.
+ */
 public class Site {
-
 
     private static final int totalVariables = 20;
     private int siteId;

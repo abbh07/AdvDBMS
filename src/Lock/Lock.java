@@ -7,17 +7,21 @@ package Lock;
 
 import Transaction.Transaction;
 
+/**
+ * A class which packages a Lock object specifying the LockType and the Transaction.
+ * Contains getters and setters.
+ */
 public class Lock {
 
     LockTypes lockType;
     Transaction transaction;
 
-    public Lock(){
+    public Lock() {
         this.lockType = LockTypes.NOLOCK;
         this.transaction = null;
     }
 
-    public Lock(LockTypes lockType, Transaction transaction){
+    public Lock(LockTypes lockType, Transaction transaction) {
         this.lockType = lockType;
         this.transaction = transaction;
     }

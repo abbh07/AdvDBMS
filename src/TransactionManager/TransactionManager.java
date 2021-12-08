@@ -17,6 +17,10 @@ import util.Cache;
 
 import java.util.*;
 
+/**
+ * The main class of the program which interacts with IOManager to run the simulation.
+ * Contains constructor, getters and setters.
+ */
 public class TransactionManager {
 
     private int tick = 0;
@@ -109,11 +113,11 @@ public class TransactionManager {
             }
         }
         if (!isRead) {
-            if (firstAttempt){
-                if(sites.size() == 1){
-                    for(Site site : sites){
-                        if(!site.getSiteStatus()){
-                            System.out.print("Site "+ site.getSiteId() + " is down. ");
+            if (firstAttempt) {
+                if (sites.size() == 1) {
+                    for (Site site : sites) {
+                        if (!site.getSiteStatus()) {
+                            System.out.print("Site " + site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -155,11 +159,11 @@ public class TransactionManager {
         }
 
         if (!isAvailable) {
-            if (firstAttempt){
-                if(allValidSites.size() == 1){
-                    for(Site site : allValidSites){
-                        if(!site.getSiteStatus()){
-                            System.out.print("Site "+ site.getSiteId() + " is down. ");
+            if (firstAttempt) {
+                if (allValidSites.size() == 1) {
+                    for (Site site : allValidSites) {
+                        if (!site.getSiteStatus()) {
+                            System.out.print("Site " + site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -221,11 +225,11 @@ public class TransactionManager {
                 }
             }
         } else {
-            if (firstAttempt){
-                if(allValidSites.size() == 1){
-                    for(Site site : allValidSites){
-                        if(!site.getSiteStatus()){
-                            System.out.print("Site "+ site.getSiteId() + " is down. ");
+            if (firstAttempt) {
+                if (allValidSites.size() == 1) {
+                    for (Site site : allValidSites) {
+                        if (!site.getSiteStatus()) {
+                            System.out.print("Site " + site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -442,11 +446,11 @@ public class TransactionManager {
                         }
                     }
                 }
-                if (firstAttempt){
-                    if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
-                        for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
-                            if(!site.getSiteStatus()){
-                                System.out.print("Site "+ site.getSiteId() + " is down. ");
+                if (firstAttempt) {
+                    if (variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1) {
+                        for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
+                            if (!site.getSiteStatus()) {
+                                System.out.print("Site " + site.getSiteId() + " is down. ");
                             }
                         }
                     }
@@ -478,7 +482,7 @@ public class TransactionManager {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
-                    if(site.getSiteStatus()) {
+                    if (site.getSiteStatus()) {
                         isAllSitesDown = false;
                         for (Lock lock : site.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
                             if (!lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()) || lock.getLockType() != LockTypes.WRITE) {
@@ -491,12 +495,12 @@ public class TransactionManager {
                         }
                     }
                 }
-                if(isAllSitesDown){
-                    if (firstAttempt){
-                        if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
-                            for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
-                                if(!site.getSiteStatus()){
-                                    System.out.print("Site "+ site.getSiteId() + " is down. ");
+                if (isAllSitesDown) {
+                    if (firstAttempt) {
+                        if (variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1) {
+                            for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
+                                if (!site.getSiteStatus()) {
+                                    System.out.print("Site " + site.getSiteId() + " is down. ");
                                 }
                             }
                         }
@@ -522,10 +526,9 @@ public class TransactionManager {
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                if(action.getTransaction().getTransactionType().equals(TransactionType.READONLY)){
+                if (action.getTransaction().getTransactionType().equals(TransactionType.READONLY)) {
                     this.processAction(action, false);
-                }
-                else if (!conflictWithWaitQueue(actionsToCheck, action, false)) {
+                } else if (!conflictWithWaitQueue(actionsToCheck, action, false)) {
                     actionsToCheck.add(action);
                     this.processAction(action, false);
                 }

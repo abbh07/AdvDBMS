@@ -7,6 +7,10 @@ package util;
 
 import java.util.HashMap;
 
+/**
+ * A data class used by the caching logic along with its setters and getters.
+ * Also contains a constructor.
+ */
 public class Cache {
 
     public String variable;

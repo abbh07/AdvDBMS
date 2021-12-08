@@ -5,6 +5,9 @@
  */
 package Action;
 
+/**
+ * Enum of Operations.
+ */
 public enum Operations {
     BEGIN,
     BEGINRO,

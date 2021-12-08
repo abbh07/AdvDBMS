@@ -5,9 +5,12 @@
  */
 package Action;
 
+/**
+ * DumpAction subclass with a constructor.
+ */
 public class DumpAction extends Action {
 
-    public DumpAction(){
+    public DumpAction() {
         this.operation = Operations.DUMP;
     }
 }

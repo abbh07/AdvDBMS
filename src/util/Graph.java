@@ -7,6 +7,11 @@ package util;
 
 import java.util.*;
 
+/**
+ * A utility class holding all the graph operation for deadlock detection in the adjacency list.
+ * This class interacts with the wrapper class Deadlock to identify a deadlock scenario, add edge, remove edge to/from the graph.
+ * Contains appropriate getters, setters and constructor.
+ */
 public class Graph {
     private static final int totalVertices = 100000;
     private List<List<Integer>> adj;
