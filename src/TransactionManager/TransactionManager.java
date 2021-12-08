@@ -1,3 +1,8 @@
+/**
+ * @author Aakash Bhattacharya and Shobhit Sinha
+ * @version 1.0.0
+ * @date 12/07/2021
+ */
 package TransactionManager;
 
 import Action.*;
@@ -29,6 +34,17 @@ public class TransactionManager {
         this.variableSiteMap = new HashMap<>();
     }
 
+    public List<Transaction> getTransactions() {
+        return this.transactions;
+    }
+
+    public List<Site> getSites() {
+        return this.sites;
+    }
+
+    /**
+     * Populates the sites with the initial data.
+     */
     public void init() {
         for (int j = 1; j <= 10; j++) {
             Site site = new Site(j);
@@ -57,23 +73,30 @@ public class TransactionManager {
         }
     }
 
-
-    public List<Transaction> getTransactions() {
-        return this.transactions;
-    }
-
-    public List<Site> getSites() {
-        return this.sites;
-    }
-
+    /**
+     * Adds a site to the list.
+     *
+     * @param site Site object
+     */
     public void addSite(Site site) {
         this.sites.add(site);
     }
 
+    /**
+     * Adds a transaction to the list.
+     *
+     * @param transaction Transaction object
+     */
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
     }
 
+    /**
+     * Function to handle a read only action.
+     *
+     * @param action       ReadAction object
+     * @param firstAttempt Boolean signifying if an action is executed for the first time.
+     */
     private void readOnlyAction(ReadAction action, boolean firstAttempt) {
         HashSet<Site> sites = variableSiteMap.get(action.getVariable());
         boolean isRead = false;
@@ -81,7 +104,7 @@ public class TransactionManager {
             if (site.getSiteStatus() && !site.getVariableStaleStateMap().get(action.getVariable()) && site.canAccessReadOnly(action.getVariable(), action.getTransaction())) {
                 isRead = true;
                 site.addTransaction(action.getTransaction());
-                System.out.println(action.getTransaction().getTransactionId() + ": " +action.getVariable() + ": " + site.getValue(action.getVariable(), action.getTransaction().getStartTime()));
+                System.out.println(action.getTransaction().getTransactionId() + ": " + action.getVariable() + ": " + site.getValue(action.getVariable(), action.getTransaction().getStartTime()));
                 break;
             }
         }
@@ -90,9 +113,14 @@ public class TransactionManager {
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
             waitQueue.add(action);
         }
-
     }
 
+    /**
+     * Function to handle a read action.
+     *
+     * @param action       ReadAction object
+     * @param firstAttempt Boolean signifying if an action is executed for the first time.
+     */
     private void readAction(ReadAction action, boolean firstAttempt) {
         boolean isAvailable = false;
         HashSet<Site> allValidSites = variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>());
@@ -103,7 +131,7 @@ public class TransactionManager {
                 if (s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     s.addTransaction(action.getTransaction());
-                    System.out.println(action.getTransaction().getTransactionId() + ": " +action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
+                    System.out.println(action.getTransaction().getTransactionId() + ": " + action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
                 } else {
@@ -125,6 +153,12 @@ public class TransactionManager {
         }
     }
 
+    /**
+     * Function to handle a write action.
+     *
+     * @param action       WriteAction object
+     * @param firstAttempt Boolean signifying if an action is executed for the first time.
+     */
     private void writeAction(WriteAction action, boolean firstAttempt) {
 
         boolean isAllAvailable = true;
@@ -174,20 +208,38 @@ public class TransactionManager {
         }
     }
 
+    /**
+     * Function to handle a begin action.
+     *
+     * @param action BeginAction object
+     */
     private void beginAction(BeginAction action) {
         this.addTransaction(action.getTransaction());
     }
 
+    /**
+     * Function to handle a beginro action.
+     *
+     * @param action BeginRoAction object
+     */
     private void beginRoAction(BeginRoAction action) {
         this.addTransaction(action.getTransaction());
     }
 
+    /**
+     * Function to handle a dump action.
+     */
     private void dumpAction() {
         for (Site site : sites) {
             site.print();
         }
     }
 
+    /**
+     * Function to handle a recover action.
+     *
+     * @param action RecoverAction object
+     */
     private void recoverAction(RecoverAction action) {
         Site site = action.getSite();
         site.setSiteStatus(true);
@@ -197,12 +249,17 @@ public class TransactionManager {
         site.setStartEndTimeMap(treeMap);
         HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
 
-        for(String entry : staleStateMap.keySet()) {
-            if(variableSiteMap.get(entry).size()>1)
+        for (String entry : staleStateMap.keySet()) {
+            if (variableSiteMap.get(entry).size() > 1)
                 staleStateMap.put(entry, true);
         }
     }
 
+    /**
+     * Function to handle an end action.
+     *
+     * @param action EndAction object
+     */
     private void endAction(EndAction action) {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
@@ -227,6 +284,12 @@ public class TransactionManager {
         }
     }
 
+    /**
+     * Cleans up the locks and queues corresponding to a lock.
+     *
+     * @param transaction Transaction object
+     * @param isAborted   Boolean signifying if a transaction has been aborted
+     */
     private void cleanUpTransaction(Transaction transaction, boolean isAborted) {
         if (isAborted) {
             System.out.println("Transaction " + transaction.getTransactionId() + " is Aborted");
@@ -252,6 +315,9 @@ public class TransactionManager {
         transactions.remove(transaction);
     }
 
+    /**
+     * Function to handle a fail action.
+     */
     private void failAction(FailAction action) {
         Site site = action.getSite();
         site.setSiteStatus(false);
@@ -262,6 +328,12 @@ public class TransactionManager {
         }
     }
 
+    /**
+     * Processes an action by casting it to the appropriate subclass.
+     *
+     * @param action       Action object
+     * @param firstAttempt if the action is processed for the first time
+     */
     public void processAction(Action action, boolean firstAttempt) {
         Operations actionType = action.getOperation();
         switch (actionType) {
@@ -308,10 +380,26 @@ public class TransactionManager {
 
     }
 
+    /**
+     * Helper function to check if there's a conflict with an item in the wait queue.
+     *
+     * @param queue        Queue of actions
+     * @param action       Action object
+     * @param firstAttempt If it conflicts for the first time
+     * @return Boolean signifying if it's conflicting
+     */
     private boolean conflictWithWaitQueue(Queue<Action> queue, Action action, boolean firstAttempt) {
         return action.getOperation() == Operations.READ ? conflictWithWaitQueueRead(queue, (ReadAction) action, firstAttempt) : conflictWithWaitQueueWrite(queue, (WriteAction) action, firstAttempt);
     }
 
+    /**
+     * Helper function to check if there's a read conflict with an item in the wait queue.
+     *
+     * @param queue        Queue of actions
+     * @param action       AReadction object
+     * @param firstAttempt If it conflicts for the first time
+     * @return Boolean signifying if it's conflicting
+     */
     private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action, boolean firstAttempt) {
         for (Action actionToCheck : queue) {
             if (actionToCheck instanceof WriteAction) {
@@ -336,6 +424,14 @@ public class TransactionManager {
         return false;
     }
 
+    /**
+     * Helper function to check if there's a write conflict with an item in the wait queue.
+     *
+     * @param queue        Queue of actions
+     * @param action       WriteAction object
+     * @param firstAttempt If it conflicts for the first time
+     * @return Bollean signifying if it's conflicting
+     */
     private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action, boolean firstAttempt) {
         for (Action actionToCheck : queue) {
             if (actionToCheck instanceof WriteAction) {
@@ -359,6 +455,9 @@ public class TransactionManager {
         return false;
     }
 
+    /**
+     * Resolves the wait queue by traversing and processing all the entries in the queue.
+     */
     private void resolveQueue() {
         Queue<Action> actionsToCheck;
         while (!waitQueue.isEmpty()) {
@@ -378,6 +477,11 @@ public class TransactionManager {
         }
     }
 
+    /**
+     * The main function which drives the whole code by reading an input line at a time.
+     *
+     * @param filename Input filename
+     */
     public void simulate(String filename) {
         IOManager ioManager = new IOManager(filename);
         String line;
