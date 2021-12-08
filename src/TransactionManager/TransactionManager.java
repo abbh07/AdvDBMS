@@ -100,8 +100,8 @@ public class TransactionManager {
         boolean dependencyFound = false;
 
         for (Site s : allValidSites) {
-            if (s.getSiteStatus() && !dependencyFound) {
-                if (s.getVariableStaleStateMap().get(action.getVariable()) && s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
+            if (s.getSiteStatus() && !s.getVariableStaleStateMap().get(action.getVariable()) && !dependencyFound) {
+                if (s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ)) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.READ);
                     s.addTransaction(action.getTransaction());
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
@@ -128,6 +128,7 @@ public class TransactionManager {
     }
 
     private void writeAction(WriteAction action, boolean firstAttempt) {
+
         boolean isAllAvailable = true;
 
         for (Site s : sites) {
@@ -135,7 +136,7 @@ public class TransactionManager {
                 if (!s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE)) {
                     List<Lock> locks = s.getLockMap().get(action.getVariable());
                     for (Lock l : locks) {
-                        if (l.getLockType().equals(LockTypes.WRITE)) {
+                        if (l.getLockType().equals(LockTypes.WRITE) || (l.getTransaction().getTransactionId() != action.getTransaction().getTransactionId())) {
                             deadlock.addEdge(action.getTransaction().getTransactionId(), l.getTransaction().getTransactionId());
                         }
                     }
@@ -217,10 +218,8 @@ public class TransactionManager {
             }
             action.getTransaction().setLive(false);
             cleanUpTransaction(action.getTransaction(), false);
-            //Print end
             System.out.println("Transaction " + action.getTransaction().getTransactionId() + " commits.");
         } else {
-            //Print already ended
             cleanUpTransaction(action.getTransaction(), true);
         }
     }
@@ -305,15 +304,68 @@ public class TransactionManager {
         }
 
     }
-
+    private boolean conflictWithWaitQueue(Queue<Action> queue, Action action){
+        return action.getOperation() == Operations.READ ? conflictWithWaitQueueRead(queue, (ReadAction) action) : conflictWithWaitQueueWrite(queue, (WriteAction) action);
+    }
+    private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action){
+        for(Action actionToCheck : queue){
+            if(actionToCheck instanceof ReadAction){
+                continue;
+            }
+            else if(actionToCheck instanceof WriteAction){
+                WriteAction actionInQueue = (WriteAction) actionToCheck;
+                if(actionInQueue.getVariable() != action.getVariable()){
+                    continue;
+                }
+                for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
+                    for(Lock lock : site.getLockMap().get(action.getVariable())){
+                        if(lock.getTransaction().getTransactionId() == action.getTransaction().getTransactionId()){
+                            return false;
+                        }
+                    }
+                }
+                deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
+                waitQueue.add(action);
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action){
+        for(Action actionToCheck : queue){
+            if(actionToCheck instanceof ReadAction){
+                continue;
+            }
+            else if(actionToCheck instanceof WriteAction){
+                WriteAction actionInQueue = (WriteAction) actionToCheck;
+                if(actionInQueue.getVariable() != action.getVariable()){
+                    continue;
+                }
+                for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
+                    for(Lock lock : site.getLockMap().get(action.getVariable())){
+                        if(lock.getTransaction().getTransactionId() != action.getTransaction().getTransactionId() || lock.getLockType() != LockTypes.WRITE){
+                            deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
+                            waitQueue.add(action);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
     private void resolveQueue() {
+        Queue<Action> actionsToCheck;
         while (!waitQueue.isEmpty()) {
             int size = waitQueue.size();
+            actionsToCheck = new LinkedList<>();
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                this.processAction(action, false);
-                //toggle boolean
+                if(!conflictWithWaitQueue(actionsToCheck, action)) {
+                    actionsToCheck.add(action);
+                    this.processAction(action, false);
+                }
             }
             if (size == waitQueue.size()) {
                 break;
@@ -410,8 +462,12 @@ public class TransactionManager {
                 int value = Integer.parseInt(fields.split(",")[2]);
                 action = new WriteAction(writeTransaction, variable, value);
             }
-            if (action != null)
+            if (action != null){
+                if((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action))
+                    continue;
                 this.processAction(action, true);
+            }
+
         }
     }
 }
