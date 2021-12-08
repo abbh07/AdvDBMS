@@ -196,8 +196,10 @@ public class TransactionManager {
         treeMap.put(tick, Integer.MAX_VALUE);
         site.setStartEndTimeMap(treeMap);
         HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
-        for (String entry : staleStateMap.keySet()) {
-            staleStateMap.put(entry, true);
+
+        for(String entry : staleStateMap.keySet()) {
+            if(variableSiteMap.get(entry).size()>1)
+                staleStateMap.put(entry, true);
         }
     }
 
