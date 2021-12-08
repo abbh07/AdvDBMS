@@ -389,7 +389,7 @@ public class Site {
         });
         for (String key : sortedKeys) {
             int latestTime = this.dataMap.get(key).lastKey();
-            System.out.print(key + ":" + this.dataMap.get(key).get(latestTime) + " ");
+            System.out.print(key + ": " + this.dataMap.get(key).get(latestTime) + " ");
         }
         System.out.println();
     }

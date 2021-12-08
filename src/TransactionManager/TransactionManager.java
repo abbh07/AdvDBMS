@@ -109,8 +109,16 @@ public class TransactionManager {
             }
         }
         if (!isRead) {
-            if (firstAttempt)
+            if (firstAttempt){
+                if(sites.size() == 1){
+                    for(Site site : sites){
+                        if(!site.getSiteStatus()){
+                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                        }
+                    }
+                }
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+            }
             waitQueue.add(action);
         }
     }
@@ -147,8 +155,16 @@ public class TransactionManager {
         }
 
         if (!isAvailable) {
-            if (firstAttempt)
+            if (firstAttempt){
+                if(allValidSites.size() == 1){
+                    for(Site site : allValidSites){
+                        if(!site.getSiteStatus()){
+                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                        }
+                    }
+                }
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+            }
             waitQueue.add(action);
         }
     }
@@ -162,9 +178,12 @@ public class TransactionManager {
     private void writeAction(WriteAction action, boolean firstAttempt) {
 
         boolean isAllAvailable = true;
+        boolean isAllSitesDown = true;
+        HashSet<Site> allValidSites = variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>());
 
-        for (Site s : sites) {
-            if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
+        for (Site s : allValidSites) {
+            if (s.getSiteStatus()) {
+                isAllSitesDown = false;
                 if (!s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE)) {
                     List<Lock> locks = s.getLockMap().get(action.getVariable());
                     for (Lock l : locks) {
@@ -178,9 +197,9 @@ public class TransactionManager {
             }
         }
 
-        if (isAllAvailable) {
-            for (Site s : sites) {
-                if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
+        if (isAllAvailable && !isAllSitesDown) {
+            for (Site s : allValidSites) {
+                if (s.getSiteStatus()) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
                     s.addTransaction(action.getTransaction());
                     Map<String, Set<Cache>> cache = s.getDatacache();
@@ -202,8 +221,17 @@ public class TransactionManager {
                 }
             }
         } else {
-            if (firstAttempt)
+            if (firstAttempt){
+                if(allValidSites.size() == 1){
+                    for(Site site : allValidSites){
+                        if(!site.getSiteStatus()){
+                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                        }
+                    }
+                }
                 System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+            }
+
             waitQueue.add(action);
         }
     }
@@ -278,7 +306,7 @@ public class TransactionManager {
             }
             action.getTransaction().setLive(false);
             cleanUpTransaction(action.getTransaction(), false);
-            System.out.println("Transaction " + action.getTransaction().getTransactionId() + " commits.");
+            System.out.println(action.getTransaction().getTransactionId() + " commits.");
         } else {
             cleanUpTransaction(action.getTransaction(), true);
         }
@@ -292,7 +320,7 @@ public class TransactionManager {
      */
     private void cleanUpTransaction(Transaction transaction, boolean isAborted) {
         if (isAborted) {
-            System.out.println("Transaction " + transaction.getTransactionId() + " is Aborted");
+            System.out.println(transaction.getTransactionId() + " aborts");
         }
         for (Site s : sites) {
             for (String variable : s.getLockMap().keySet()) {
