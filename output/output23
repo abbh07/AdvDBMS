@@ -1,5 +1,19 @@
-// T3 must wait till the commit of T2 before it reads x4
-// (because of locking), so sees 44.
-// T3 must abort though because the lock information is lost on site 4
-// upon failure
-// T1 reads the initial value of x2 because T3 has aborted.
+Please enter the complete input file path: 
+/Users/aakash/Programming/IntelliJ Projects/AdvDBMS/input/input23
+Transaction T3 is being added to the wait queue because of lock conflict
+Variable x3 is updated on Site 4 with value 44
+T2 commits because it was not aborted.
+T3: x3: 44
+This transaction accessed a site which failed and hence T3 aborts
+T1: x2: 20
+T1 commits because it was not aborted.
+site 1 - x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 2 - x1: 10 x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x11: 110 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 3 - x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 4 - x2: 20 x3: 44 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x13: 130 x14: 140 x16: 160 x18: 180 x20: 200 
+site 5 - x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 6 - x2: 20 x4: 40 x5: 50 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x15: 150 x16: 160 x18: 180 x20: 200 
+site 7 - x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 8 - x2: 20 x4: 40 x6: 60 x7: 70 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x17: 170 x18: 180 x20: 200 
+site 9 - x2: 20 x4: 40 x6: 60 x8: 80 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x20: 200 
+site 10 - x2: 20 x4: 40 x6: 60 x8: 80 x9: 90 x10: 100 x12: 120 x14: 140 x16: 160 x18: 180 x19: 190 x20: 200
