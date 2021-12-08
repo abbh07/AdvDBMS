@@ -323,7 +323,7 @@ public class TransactionManager {
                 }
             }
             action.getTransaction().setLive(false);
-            cleanUpTransaction(action.getTransaction(), false, true);
+            cleanUpTransaction(action.getTransaction(), false, false);
             System.out.println(action.getTransaction().getTransactionId() + " commits because it was not aborted.");
         } else {
             cleanUpTransaction(action.getTransaction(), true, true);
