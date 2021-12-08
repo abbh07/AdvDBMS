@@ -8,17 +8,17 @@ import Lock.LockTypes;
 import Site.Site;
 import Transaction.Transaction;
 import Transaction.TransactionType;
+import util.Cache;
 
 import java.util.*;
 
 public class TransactionManager {
 
+    private int tick = 0;
     private List<Transaction> transactions;
     private List<Site> sites;
     private Queue<Action> waitQueue;
     private Deadlock deadlock;
-    private HashMap<String, HashMap<String, List<Map.Entry<Integer, Integer>>>> cache;
-    private int tick = 0;
     private Map<String, HashSet<Site>> variableSiteMap;
 
     public TransactionManager() {
@@ -27,7 +27,6 @@ public class TransactionManager {
         this.deadlock = new Deadlock();
         this.waitQueue = new LinkedList<>();
         this.variableSiteMap = new HashMap<>();
-        this.cache = new HashMap<>();
     }
 
     public void init() {
@@ -107,10 +106,9 @@ public class TransactionManager {
                     System.out.println(action.getVariable() + ": " + s.getLatestValue(action.getVariable()));
                     isAvailable = true;
                     break;
-                }
-                else {
-                    for(Lock lock : s.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
-                        if(lock.getLockType().equals(LockTypes.WRITE)) {
+                } else {
+                    for (Lock lock : s.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
+                        if (lock.getLockType().equals(LockTypes.WRITE)) {
                             deadlock.addEdge(action.getTransaction().getTransactionId(), lock.getTransaction().getTransactionId());
                             dependencyFound = true;
                             break;
@@ -151,12 +149,22 @@ public class TransactionManager {
                 if (s.getSiteStatus() && s.getDataMap().containsKey(action.getVariable())) {
                     s.acquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE);
                     s.addTransaction(action.getTransaction());
-                    HashMap<String, List<Map.Entry<Integer, Integer>>> variables = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>());
-
-                    List<Map.Entry<Integer, Integer>> listPair = variables.getOrDefault(action.getVariable(), new ArrayList<>());
-                    listPair.add(Map.entry(tick, action.getValue()));
-                    variables.put(action.getVariable(), listPair);
-                    cache.put(action.getTransaction().getTransactionId(), variables);
+                    Map<String, Set<Cache>> cache = s.getDatacache();
+                    Set<Cache> classes = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashSet<>());
+                    Cache obj = null;
+                    for (Cache c : classes) {
+                        if (Objects.equals(c.getVariable(), action.getVariable())) {
+                            obj = c;
+                            break;
+                        }
+                    }
+                    if (obj == null) {
+                        obj = new Cache(action.getVariable(), tick, action.getValue());
+                    } else {
+                        obj.addValue(tick, action.getValue());
+                    }
+                    classes.add(obj);
+                    s.getDatacache().put(action.getTransaction().getTransactionId(), classes);
                 }
             }
         } else {
@@ -188,7 +196,7 @@ public class TransactionManager {
         treeMap.put(tick, Integer.MAX_VALUE);
         site.setStartEndTimeMap(treeMap);
         HashMap<String, Boolean> staleStateMap = site.getVariableStaleStateMap();
-        for(String entry : staleStateMap.keySet()) {
+        for (String entry : staleStateMap.keySet()) {
             staleStateMap.put(entry, true);
         }
     }
@@ -196,23 +204,15 @@ public class TransactionManager {
     private void endAction(EndAction action) {
         //To check what to do with Q?
         if (action.getTransaction().getLive()) {
-            //Bhatta - cache to write or not?
-            HashMap<String, List<Map.Entry<Integer, Integer>>> transactionData = cache.getOrDefault(action.getTransaction().getTransactionId(), new HashMap<>());
-
-            for (Map.Entry<String, List<Map.Entry<Integer, Integer>>> entry : transactionData.entrySet()) {
-                String key = entry.getKey();
-                for (Map.Entry<Integer, Integer> val : entry.getValue()) {
-                    for (Site s : sites) {
-                        if (s.getSiteStatus()) {
-                            Map<String, TreeMap<Integer, Integer>> dataMap = s.getDataMap();
-                            if (dataMap.containsKey(key)) {
-                                TreeMap<Integer, Integer> pair = dataMap.get(key);
-                                pair.put(val.getKey(), val.getValue());
-                                dataMap.put(key, pair);
-                                s.getVariableStaleStateMap().put(key, false);
-                                System.out.println("Variable " + key + " is updated on Site " + s.getSiteId() + " with value " + val.getValue());
-                            }
-                        }
+            for (Site site : sites) {
+                Map<String, Set<Cache>> dataCache = site.getDatacache();
+                Set<Cache> transactionCache = dataCache.getOrDefault(action.getTransaction().getTransactionId(), new HashSet<>());
+                for (Cache c : transactionCache) {
+                    String variable = c.getVariable();
+                    for (int timeOfCache : c.getPair().keySet()) {
+                        int valueOfCache = c.getPair().get(timeOfCache);
+                        site.getDataMap().get(variable).put(timeOfCache, valueOfCache);
+                        System.out.println("Variable " + variable + " is updated on Site " + site.getSiteId() + " with value " + valueOfCache);
                     }
                 }
             }
@@ -304,22 +304,23 @@ public class TransactionManager {
         }
 
     }
-    private boolean conflictWithWaitQueue(Queue<Action> queue, Action action){
+
+    private boolean conflictWithWaitQueue(Queue<Action> queue, Action action) {
         return action.getOperation() == Operations.READ ? conflictWithWaitQueueRead(queue, (ReadAction) action) : conflictWithWaitQueueWrite(queue, (WriteAction) action);
     }
-    private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action){
-        for(Action actionToCheck : queue){
-            if(actionToCheck instanceof ReadAction){
+
+    private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action) {
+        for (Action actionToCheck : queue) {
+            if (actionToCheck instanceof ReadAction) {
                 continue;
-            }
-            else if(actionToCheck instanceof WriteAction){
+            } else if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
-                if(actionInQueue.getVariable() != action.getVariable()){
+                if (actionInQueue.getVariable() != action.getVariable()) {
                     continue;
                 }
-                for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
-                    for(Lock lock : site.getLockMap().get(action.getVariable())){
-                        if(lock.getTransaction().getTransactionId() == action.getTransaction().getTransactionId()){
+                for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
+                    for (Lock lock : site.getLockMap().get(action.getVariable())) {
+                        if (lock.getTransaction().getTransactionId() == action.getTransaction().getTransactionId()) {
                             return false;
                         }
                     }
@@ -331,19 +332,19 @@ public class TransactionManager {
         }
         return false;
     }
-    private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action){
-        for(Action actionToCheck : queue){
-            if(actionToCheck instanceof ReadAction){
+
+    private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action) {
+        for (Action actionToCheck : queue) {
+            if (actionToCheck instanceof ReadAction) {
                 continue;
-            }
-            else if(actionToCheck instanceof WriteAction){
+            } else if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
-                if(actionInQueue.getVariable() != action.getVariable()){
+                if (actionInQueue.getVariable() != action.getVariable()) {
                     continue;
                 }
-                for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
-                    for(Lock lock : site.getLockMap().get(action.getVariable())){
-                        if(lock.getTransaction().getTransactionId() != action.getTransaction().getTransactionId() || lock.getLockType() != LockTypes.WRITE){
+                for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
+                    for (Lock lock : site.getLockMap().get(action.getVariable())) {
+                        if (lock.getTransaction().getTransactionId() != action.getTransaction().getTransactionId() || lock.getLockType() != LockTypes.WRITE) {
                             deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                             waitQueue.add(action);
                             return true;
@@ -354,6 +355,7 @@ public class TransactionManager {
         }
         return false;
     }
+
     private void resolveQueue() {
         Queue<Action> actionsToCheck;
         while (!waitQueue.isEmpty()) {
@@ -362,7 +364,7 @@ public class TransactionManager {
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                if(!conflictWithWaitQueue(actionsToCheck, action)) {
+                if (!conflictWithWaitQueue(actionsToCheck, action)) {
                     actionsToCheck.add(action);
                     this.processAction(action, false);
                 }
@@ -462,8 +464,8 @@ public class TransactionManager {
                 int value = Integer.parseInt(fields.split(",")[2]);
                 action = new WriteAction(writeTransaction, variable, value);
             }
-            if (action != null){
-                if((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action))
+            if (action != null) {
+                if ((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action))
                     continue;
                 this.processAction(action, true);
             }

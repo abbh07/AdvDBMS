@@ -3,6 +3,7 @@ package Site;
 import Lock.Lock;
 import Lock.LockTypes;
 import Transaction.Transaction;
+import util.Cache;
 
 import java.util.*;
 
@@ -12,6 +13,7 @@ public class Site {
     private static final int totalVariables = 20;
     private int siteId;
     private Map<String, TreeMap<Integer, Integer>> dataMap;
+    private HashMap<String, Set<Cache>> datacache;
     private Map<String, List<Lock>> lockMap;
     private TreeMap<Integer, Integer> startEndTimeMap;
     private boolean siteStatus;
@@ -26,6 +28,7 @@ public class Site {
         this.siteStatus = true;
         this.visitedTransactions = new HashSet<>();
         this.variableStaleStateMap = new HashMap<>();
+        this.datacache = new HashMap<>();
     }
 
     public void addDataMap(String key, int time, int value){
@@ -249,5 +252,9 @@ public class Site {
 
     public HashMap<String, Boolean> getVariableStaleStateMap() {
         return variableStaleStateMap;
+    }
+
+    public Map<String, Set<Cache>> getDatacache() {
+        return datacache;
     }
 }
