@@ -113,7 +113,7 @@ public class TransactionManager {
                 if(sites.size() == 1){
                     for(Site site : sites){
                         if(!site.getSiteStatus()){
-                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                            System.out.print("Site "+ site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -159,7 +159,7 @@ public class TransactionManager {
                 if(allValidSites.size() == 1){
                     for(Site site : allValidSites){
                         if(!site.getSiteStatus()){
-                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                            System.out.print("Site "+ site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -225,7 +225,7 @@ public class TransactionManager {
                 if(allValidSites.size() == 1){
                     for(Site site : allValidSites){
                         if(!site.getSiteStatus()){
-                            System.out.println("Site "+ site.getSiteId() + " is down.");
+                            System.out.print("Site "+ site.getSiteId() + " is down. ");
                         }
                     }
                 }
@@ -436,14 +436,22 @@ public class TransactionManager {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
-                    for (Lock lock : site.getLockMap().get(action.getVariable())) {
+                    for (Lock lock : site.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
                         if (lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId())) {
                             return false;
                         }
                     }
                 }
-                if (firstAttempt)
+                if (firstAttempt){
+                    if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
+                        for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
+                            if(!site.getSiteStatus()){
+                                System.out.print("Site "+ site.getSiteId() + " is down. ");
+                            }
+                        }
+                    }
                     System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                }
                 deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                 waitQueue.add(action);
                 return true;
@@ -461,25 +469,45 @@ public class TransactionManager {
      * @return Bollean signifying if it's conflicting
      */
     private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action, boolean firstAttempt) {
+
         for (Action actionToCheck : queue) {
             if (actionToCheck instanceof WriteAction) {
+                boolean isAllSitesDown = true;
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
                 if (!actionInQueue.getVariable().equals(action.getVariable())) {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
-                    for (Lock lock : site.getLockMap().get(action.getVariable())) {
-                        if (!lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()) || lock.getLockType() != LockTypes.WRITE) {
-                            if (firstAttempt)
-                                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
-                            deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
-                            waitQueue.add(action);
-                            return true;
+                    if(site.getSiteStatus()) {
+                        isAllSitesDown = false;
+                        for (Lock lock : site.getLockMap().getOrDefault(action.getVariable(), new ArrayList<>())) {
+                            if (!lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()) || lock.getLockType() != LockTypes.WRITE) {
+                                if (firstAttempt)
+                                    System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                                deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
+                                waitQueue.add(action);
+                                return true;
+                            }
                         }
                     }
                 }
+                if(isAllSitesDown){
+                    if (firstAttempt){
+                        if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
+                            for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
+                                if(!site.getSiteStatus()){
+                                    System.out.print("Site "+ site.getSiteId() + " is down. ");
+                                }
+                            }
+                        }
+                        System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                    }
+                    waitQueue.add(action);
+                    return true;
+                }
             }
         }
+
         return false;
     }
 
@@ -494,7 +522,10 @@ public class TransactionManager {
             for (int i = 0; i < size; i++) {
                 Action action = waitQueue.peek();
                 waitQueue.poll();
-                if (!conflictWithWaitQueue(actionsToCheck, action, false)) {
+                if(action.getTransaction().getTransactionType().equals(TransactionType.READONLY)){
+                    this.processAction(action, false);
+                }
+                else if (!conflictWithWaitQueue(actionsToCheck, action, false)) {
                     actionsToCheck.add(action);
                     this.processAction(action, false);
                 }
@@ -601,7 +632,7 @@ public class TransactionManager {
                 action = new WriteAction(writeTransaction, variable, value);
             }
             if (action != null) {
-                if ((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && conflictWithWaitQueue(waitQueue, action, true))
+                if ((action.getOperation() == Operations.READ || action.getOperation() == Operations.WRITE) && !action.getTransaction().getTransactionType().equals(TransactionType.READONLY) && conflictWithWaitQueue(waitQueue, action, true))
                     continue;
                 this.processAction(action, true);
             }
