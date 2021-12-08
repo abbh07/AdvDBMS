@@ -109,15 +109,21 @@ public class TransactionManager {
             }
         }
         if (!isRead) {
+            boolean isSiteDownPrint = false;
             if (firstAttempt){
                 if(sites.size() == 1){
                     for(Site site : sites){
                         if(!site.getSiteStatus()){
                             System.out.print("Site "+ site.getSiteId() + " is down. ");
+                            isSiteDownPrint = true;
                         }
                     }
                 }
-                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
+                if(isSiteDownPrint)
+                    System.out.println(" because site is down.");
+                else
+                    System.out.println(" because of lock conflict");
             }
             waitQueue.add(action);
         }
@@ -156,14 +162,20 @@ public class TransactionManager {
 
         if (!isAvailable) {
             if (firstAttempt){
+                boolean isSiteDownPrint = false;
                 if(allValidSites.size() == 1){
                     for(Site site : allValidSites){
                         if(!site.getSiteStatus()){
                             System.out.print("Site "+ site.getSiteId() + " is down. ");
+                            isSiteDownPrint = true;
                         }
                     }
                 }
-                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
+                if(isSiteDownPrint)
+                    System.out.println(" because site is down.");
+                else
+                    System.out.println(" because of lock conflict");
             }
             waitQueue.add(action);
         }
@@ -222,14 +234,20 @@ public class TransactionManager {
             }
         } else {
             if (firstAttempt){
+                boolean isSiteDownPrint = false;
                 if(allValidSites.size() == 1){
                     for(Site site : allValidSites){
                         if(!site.getSiteStatus()){
                             System.out.print("Site "+ site.getSiteId() + " is down. ");
+                            isSiteDownPrint = true;
                         }
                     }
                 }
-                System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
+                if(isSiteDownPrint)
+                    System.out.println(" because site is down.");
+                else
+                    System.out.println(" because of lock conflict");
             }
 
             waitQueue.add(action);
@@ -305,10 +323,10 @@ public class TransactionManager {
                 }
             }
             action.getTransaction().setLive(false);
-            cleanUpTransaction(action.getTransaction(), false);
-            System.out.println(action.getTransaction().getTransactionId() + " commits.");
+            cleanUpTransaction(action.getTransaction(), false, false);
+            System.out.println(action.getTransaction().getTransactionId() + " commits because it was not aborted.");
         } else {
-            cleanUpTransaction(action.getTransaction(), true);
+            cleanUpTransaction(action.getTransaction(), true, true);
         }
     }
 
@@ -318,8 +336,10 @@ public class TransactionManager {
      * @param transaction Transaction object
      * @param isAborted   Boolean signifying if a transaction has been aborted
      */
-    private void cleanUpTransaction(Transaction transaction, boolean isAborted) {
+    private void cleanUpTransaction(Transaction transaction, boolean isAborted, boolean printReason) {
         if (isAborted) {
+            if(printReason)
+                System.out.print("This transaction accessed a site which failed and hence ");
             System.out.println(transaction.getTransactionId() + " aborts");
         }
         for (Site s : sites) {
@@ -443,14 +463,20 @@ public class TransactionManager {
                     }
                 }
                 if (firstAttempt){
+                    boolean isSiteDownPrint = false;
                     if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
                         for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
                             if(!site.getSiteStatus()){
                                 System.out.print("Site "+ site.getSiteId() + " is down. ");
+                                isSiteDownPrint = true;
                             }
                         }
                     }
-                    System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                    System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
+                    if(isSiteDownPrint)
+                        System.out.println(" because site is down.");
+                    else
+                        System.out.println(" because of lock conflict");
                 }
                 deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                 waitQueue.add(action);
@@ -493,14 +519,20 @@ public class TransactionManager {
                 }
                 if(isAllSitesDown){
                     if (firstAttempt){
+                        boolean isSiteDownPrint = false;
                         if(variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>()).size() == 1){
                             for(Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())){
                                 if(!site.getSiteStatus()){
                                     System.out.print("Site "+ site.getSiteId() + " is down. ");
+                                    isSiteDownPrint = true;
                                 }
                             }
                         }
-                        System.out.println("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue because of lock conflict");
+                        System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
+                        if(isSiteDownPrint)
+                            System.out.println(" because site is down.");
+                        else
+                            System.out.println(" because of lock conflict");
                     }
                     waitQueue.add(action);
                     return true;
@@ -549,7 +581,7 @@ public class TransactionManager {
             if (deadlock.checkForDeadlock()) {
                 Transaction victim = deadlock.resolveDeadlock(transactions);
                 System.out.println("Deadlock detected, aborting youngest transaction: " + victim.getTransactionId());
-                cleanUpTransaction(victim, true);
+                cleanUpTransaction(victim, true, false);
             }
             resolveQueue();
 
