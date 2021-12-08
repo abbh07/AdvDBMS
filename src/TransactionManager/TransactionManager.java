@@ -385,6 +385,7 @@ public class TransactionManager {
             //Check deadlock and waitQ;
             if (deadlock.checkForDeadlock()) {
                 Transaction victim = deadlock.resolveDeadlock(transactions);
+                System.out.println("Deadlock detected, aborting youngest transaction: " + victim.getTransactionId());
                 cleanUpTransaction(victim, true);
             }
             resolveQueue();
