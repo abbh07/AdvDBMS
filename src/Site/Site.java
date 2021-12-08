@@ -38,7 +38,7 @@ public class Site {
     }
 
     public void addLockMap(String key, Lock lock){
-        List<Lock> locks = this.lockMap.getOrDefault(key, new ArrayList<Lock>());
+        List<Lock> locks = this.lockMap.getOrDefault(key, new ArrayList<>());
         locks.add(lock);
         this.lockMap.put(key, locks);
     }
@@ -115,13 +115,13 @@ public class Site {
     }
 
     public boolean canAcquireLock(String variable, Transaction transaction, LockTypes lockType) {
-        List<Lock> locksPresent = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
+        List<Lock> locksPresent = this.lockMap.getOrDefault(variable, new ArrayList<>());
         return (lockType == LockTypes.READ) ? canAcquireReadLock(locksPresent, transaction) : canAcquireWriteLock(locksPresent, transaction);
     }
 
     private boolean canAcquireReadLock(List<Lock> locksPresent, Transaction transaction) {
         for(Lock lock : locksPresent){
-            if(lock.getLockType() == LockTypes.WRITE && lock.getTransaction().getTransactionId() != transaction.getTransactionId()){
+            if(lock.getLockType() == LockTypes.WRITE && !lock.getTransaction().getTransactionId().equals(transaction.getTransactionId())){
                 return false;
             }
         }
@@ -130,10 +130,10 @@ public class Site {
 
     private boolean canAcquireWriteLock(List<Lock> locksPresent, Transaction transaction) {
         for(Lock lock : locksPresent){
-            if(lock.getLockType() == LockTypes.WRITE && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+            if(lock.getLockType() == LockTypes.WRITE && lock.getTransaction().getTransactionId().equals(transaction.getTransactionId())){
                 return true;
             }
-            if(lock.getLockType() == LockTypes.READ && lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+            if(lock.getLockType() == LockTypes.READ && lock.getTransaction().getTransactionId().equals(transaction.getTransactionId())){
                 continue;
             }
             return false;
@@ -142,10 +142,10 @@ public class Site {
     }
 
     public void releaseLock(String variable, Transaction transaction) {
-        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
-        List<Lock> locksToRemove = new ArrayList<Lock>();
+        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<>());
+        List<Lock> locksToRemove = new ArrayList<>();
         for (Lock lock : lockList){
-            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+            if(lock.getTransaction().getTransactionId().equals(transaction.getTransactionId())){
                 locksToRemove.add(lock);
             }
         }
@@ -158,7 +158,7 @@ public class Site {
         List<Lock> lockList = this.lockMap.get(variable);
         if(lockList==null || lockList.size()==0) return false;
         for(Lock lock : lockList){
-            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId() &&
+            if(lock.getTransaction().getTransactionId().equals(transaction.getTransactionId()) &&
                     (lock.getLockType() == lockType || (lockType == LockTypes.READ && lock.getLockType() == LockTypes.WRITE )))
                 return true;
         }
@@ -169,7 +169,7 @@ public class Site {
         if(lockAlreadyPresent(variable, transaction, lockType)) return;
         if(lockType == LockTypes.WRITE && promoteReadLock(variable, transaction)) return;
         Lock lock = new Lock(lockType, transaction);
-        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<Lock>());
+        List<Lock> lockList = this.lockMap.getOrDefault(variable, new ArrayList<>());
         lockList.add(lock);
         this.lockMap.put(variable, lockList);
         //call Graph method
@@ -181,7 +181,7 @@ public class Site {
         int index = -1;
         for (int i=0; i<lockList.size(); i++){
             Lock lock = lockList.get(i);
-            if(lock.getTransaction().getTransactionId() == transaction.getTransactionId()){
+            if(lock.getTransaction().getTransactionId().equals(transaction.getTransactionId())){
                 index = i;
                 break;
             }

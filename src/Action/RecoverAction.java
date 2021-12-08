@@ -1,7 +1,6 @@
 package Action;
 
 import Site.Site;
-import Transaction.Transaction;
 
 public class RecoverAction extends Action{
     private Site site;

@@ -134,7 +134,7 @@ public class TransactionManager {
                 if (!s.canAcquireLock(action.getVariable(), action.getTransaction(), LockTypes.WRITE)) {
                     List<Lock> locks = s.getLockMap().get(action.getVariable());
                     for (Lock l : locks) {
-                        if (l.getLockType().equals(LockTypes.WRITE) || (l.getTransaction().getTransactionId() != action.getTransaction().getTransactionId())) {
+                        if (l.getLockType().equals(LockTypes.WRITE) || (!l.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()))) {
                             deadlock.addEdge(action.getTransaction().getTransactionId(), l.getTransaction().getTransactionId());
                         }
                     }
@@ -182,7 +182,7 @@ public class TransactionManager {
         this.addTransaction(action.getTransaction());
     }
 
-    private void dumpAction(DumpAction action) {
+    private void dumpAction() {
         for (Site site : sites) {
             site.print();
         }
@@ -242,9 +242,9 @@ public class TransactionManager {
                 s.getLockMap().get(variable).removeAll(locksToRemove);
             }
         }
-        List<Action> actionsToRemove = new ArrayList<Action>();
+        List<Action> actionsToRemove = new ArrayList<>();
         for (Action action : waitQueue) {
-            if (action.getTransaction().getTransactionId() == transaction.getTransactionId()) {
+            if (action.getTransaction().getTransactionId().equals(transaction.getTransactionId())) {
                 actionsToRemove.add(action);
             }
         }
@@ -275,7 +275,7 @@ public class TransactionManager {
                 break;
             case DUMP:
                 if (action instanceof DumpAction)
-                    dumpAction((DumpAction) action);
+                    dumpAction();
                 break;
             case END:
                 if (action instanceof EndAction)
@@ -314,16 +314,14 @@ public class TransactionManager {
 
     private boolean conflictWithWaitQueueRead(Queue<Action> queue, ReadAction action) {
         for (Action actionToCheck : queue) {
-            if (actionToCheck instanceof ReadAction) {
-                continue;
-            } else if (actionToCheck instanceof WriteAction) {
+            if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
                 if (!actionInQueue.getVariable().equals(action.getVariable())) {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
                     for (Lock lock : site.getLockMap().get(action.getVariable())) {
-                        if (lock.getTransaction().getTransactionId() == action.getTransaction().getTransactionId()) {
+                        if (lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId())) {
                             return false;
                         }
                     }
@@ -338,16 +336,14 @@ public class TransactionManager {
 
     private boolean conflictWithWaitQueueWrite(Queue<Action> queue, WriteAction action) {
         for (Action actionToCheck : queue) {
-            if (actionToCheck instanceof ReadAction) {
-                continue;
-            } else if (actionToCheck instanceof WriteAction) {
+            if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
                 if (!actionInQueue.getVariable().equals(action.getVariable())) {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
                     for (Lock lock : site.getLockMap().get(action.getVariable())) {
-                        if (lock.getTransaction().getTransactionId() != action.getTransaction().getTransactionId() || lock.getLockType() != LockTypes.WRITE) {
+                        if (!lock.getTransaction().getTransactionId().equals(action.getTransaction().getTransactionId()) || lock.getLockType() != LockTypes.WRITE) {
                             deadlock.addEdge(action.getTransaction().getTransactionId(), actionToCheck.getTransaction().getTransactionId());
                             waitQueue.add(action);
                             return true;
