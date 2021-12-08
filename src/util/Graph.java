@@ -26,8 +26,9 @@ public class Graph {
 
     /**
      * The method performs a DFS traversal of the graph and finds a cycle.
-     * @param index Start index of the traversal
-     * @param visited Visited nodes
+     *
+     * @param index          Start index of the traversal
+     * @param visited        Visited nodes
      * @param recursionStack Nodes in the current stack
      * @return Boolean identifying if a cycle is found
      */
@@ -56,6 +57,7 @@ public class Graph {
 
     /**
      * Helper to identify a cycle in the graph.
+     *
      * @return Boolean identifying a cycle
      */
     public boolean isCyclic() {
@@ -73,7 +75,8 @@ public class Graph {
 
     /**
      * Add edge to the graph.
-     * @param source Source node
+     *
+     * @param source      Source node
      * @param destination Destination node
      */
     public void addEdge(int source, int destination) {
@@ -82,6 +85,7 @@ public class Graph {
 
     /**
      * Remove an edge from the graph.
+     *
      * @param source Node which has to be removed
      */
     public void removeEdge(int source) {
