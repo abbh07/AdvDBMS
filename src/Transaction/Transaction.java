@@ -1,7 +1,5 @@
 package Transaction;
 
-import Action.Operations;
-
 public class Transaction {
     private String transactionId;
     Boolean isLive;
