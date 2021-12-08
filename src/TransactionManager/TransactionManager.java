@@ -110,6 +110,7 @@ public class TransactionManager {
         }
         if (!isRead) {
             boolean isSiteDownPrint = false;
+            boolean isAllSitesStale = false;
             if (firstAttempt){
                 if(sites.size() == 1){
                     for(Site site : sites){
@@ -117,11 +118,31 @@ public class TransactionManager {
                             System.out.print("Site "+ site.getSiteId() + " is down. ");
                             isSiteDownPrint = true;
                         }
+                        else if(site.getVariableStaleStateMap().get(action.getVariable())){
+                            System.out.print("Site "+ site.getSiteId() + " has stale data. ");
+                            isAllSitesStale = true;
+                        }
                     }
+                }
+                if(!isAllSitesStale){
+                    boolean checkDone = false;
+                    for(Site s : sites){
+                        if(s.getSiteStatus() && !s.getVariableStaleStateMap().get(action.getVariable())){
+                            checkDone = true;
+                            break;
+                        }
+                    }
+                    if(!checkDone){
+                        isAllSitesStale = true;
+                        System.out.print("All valid sites have stale data. ");
+                    }
+
                 }
                 System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
                 if(isSiteDownPrint)
                     System.out.println(" because site is down.");
+                else if(isAllSitesStale)
+                    System.out.println(" because of stale data.");
                 else
                     System.out.println(" because of lock conflict");
             }
@@ -163,17 +184,38 @@ public class TransactionManager {
         if (!isAvailable) {
             if (firstAttempt){
                 boolean isSiteDownPrint = false;
+                boolean isAllSitesStale = false;
                 if(allValidSites.size() == 1){
                     for(Site site : allValidSites){
                         if(!site.getSiteStatus()){
                             System.out.print("Site "+ site.getSiteId() + " is down. ");
                             isSiteDownPrint = true;
                         }
+                        else if(site.getVariableStaleStateMap().get(action.getVariable())){
+                            System.out.print("Site "+ site.getSiteId() + " has stale data. ");
+                            isAllSitesStale = true;
+                        }
                     }
+                }
+                if(!isAllSitesStale){
+                    boolean checkDone = false;
+                    for(Site s : allValidSites){
+                        if(s.getSiteStatus() && !s.getVariableStaleStateMap().get(action.getVariable())){
+                            checkDone = true;
+                            break;
+                        }
+                    }
+                    if(!checkDone){
+                        isAllSitesStale = true;
+                        System.out.print("All valid sites have stale data. ");
+                    }
+
                 }
                 System.out.print("Transaction " + action.getTransaction().getTransactionId() + " is being added to the wait queue");
                 if(isSiteDownPrint)
                     System.out.println(" because site is down.");
+                else if(isAllSitesStale)
+                    System.out.println(" because of stale data.");
                 else
                     System.out.println(" because of lock conflict");
             }
