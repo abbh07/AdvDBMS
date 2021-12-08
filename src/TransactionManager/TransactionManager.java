@@ -342,7 +342,7 @@ public class TransactionManager {
                 continue;
             } else if (actionToCheck instanceof WriteAction) {
                 WriteAction actionInQueue = (WriteAction) actionToCheck;
-                if (actionInQueue.getVariable() != action.getVariable()) {
+                if (!actionInQueue.getVariable().equals(action.getVariable())) {
                     continue;
                 }
                 for (Site site : variableSiteMap.getOrDefault(action.getVariable(), new HashSet<>())) {
